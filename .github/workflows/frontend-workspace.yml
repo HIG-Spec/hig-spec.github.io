@@ -1,0 +1,32 @@
+name: Frontend workspace
+on:
+  push:
+    branches: [refactor/frontend-glass]
+    paths: [.github/workflows/frontend-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare source and pinned frontend toolchain
+        run: |
+          mkdir -p /tmp/frontend-tools
+          cd /tmp/frontend-tools
+          npm init -y
+          npm install --save-exact vue@3.5.22 vite@7.1.7 @vitejs/plugin-vue@6.0.1 typescript@5.9.2 vue-tsc@3.1.1 @types/node@22.18.6
+          tar -czf /tmp/frontend-toolchain.tar.gz node_modules package.json package-lock.json
+          cd "$GITHUB_WORKSPACE"
+          git archive HEAD -o /tmp/frontend-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-workspace
+          path: |
+            /tmp/frontend-toolchain.tar.gz
+            /tmp/frontend-source.zip
+          retention-days: 2
