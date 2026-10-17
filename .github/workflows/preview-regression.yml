@@ -1,4 +1,4 @@
-name: Preview regression tests
+name: Preview and material specification tests
 on:
   push:
     branches: [main]
@@ -10,9 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run symbol and geometry regression tests
-        run: node --test tests/symbols.test.cjs
-      - name: Verify the repair is reproducible and idempotent
+      - name: Test symbols, geometry, materials and instance overrides
+        run: node --test tests/*.test.cjs
+      - name: Check reproducible and idempotent integrations
         run: |
           python tools/apply-symbol-fix.py
+          python tools/apply-material-specs.py
           git diff --exit-code
