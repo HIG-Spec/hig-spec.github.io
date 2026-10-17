@@ -1,0 +1,61 @@
+name: Symbol preview repair
+on:
+  push:
+    branches: [fix/symbol-previews]
+    paths:
+      - '.github/workflows/symbol-preview-fix.yml'
+      - 'assets/**'
+      - 'tools/**'
+      - 'tests/**'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect symbol names without font assets
+        shell: python
+        run: |
+          import base64, gzip, hashlib, json, pathlib, re, urllib.request
+          revision = '7fceba11caad84e41bd0428ed35cab66dd39e485'
+          url = f'https://raw.githubusercontent.com/marcbouchenoire/symbolist/{revision}/packages/symbolist/src/data/symbols.json'
+          with urllib.request.urlopen(url, timeout=30) as response:
+              raw = response.read()
+          actual = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
+          assert actual == '9c082706c97c8c0fddf4e435362459eaccc17d44', actual
+          names = {value: key for key, value in json.loads(raw).items()}
+          html = pathlib.Path('index.html').read_text()
+          payload = re.search(r'<script id="geometry-payload"[^>]*>(.*?)</script>', html, re.S).group(1)
+          database = gzip.decompress(base64.b64decode(payload)).decode()
+          chars = sorted(set(re.findall('[\ue000-\uf8ff\U000f0000-\U000ffffd\U00100000-\U0010fffd]', database)))
+          result = {format(ord(char), 'X'): names.get(char) for char in chars}
+          pathlib.Path('symbol-names.json').write_text(json.dumps(result, indent=2) + '\n')
+          with urllib.request.urlopen(f'https://raw.githubusercontent.com/marcbouchenoire/symbolist/{revision}/LICENSE', timeout=30) as response:
+              pathlib.Path('symbolist-LICENSE.txt').write_bytes(response.read())
+      - name: Apply and test the renderer repair when present
+        shell: bash
+        run: |
+          if test -f tools/apply-symbol-fix.py; then
+            python tools/apply-symbol-fix.py
+            node --test tests/symbols.test.cjs
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add index.html assets tools tests
+            if ! git diff --cached --quiet; then
+              git commit -m 'fix: render semantic symbols and preserve mixed labels'
+              git push origin HEAD:fix/symbol-previews
+            fi
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: symbol-preview-build
+          path: |
+            index.html
+            symbol-names.json
+            symbolist-LICENSE.txt
+            assets/
+            tools/
+            tests/
+          retention-days: 3
