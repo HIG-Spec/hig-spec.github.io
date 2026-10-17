@@ -6,7 +6,7 @@ import { paintSurface } from './surface';
 import { bySymbol } from '../data/store';
 import type { Definition, Layer } from '../data/types';
 export type Background = 'aurora' | 'grid' | 'plain';
-type Matrix = [number, number, number, number, number, number];
+export type Matrix = [number, number, number, number, number, number];
 const mul = (a: Matrix, b: Matrix): Matrix => [
   a[0] * b[0] + a[2] * b[1],
   a[1] * b[0] + a[3] * b[1],
@@ -39,6 +39,7 @@ export function renderScene(
     label?: boolean;
     phase?: number;
     recipe?: any;
+    placement?: Matrix;
   } = {},
 ) {
   const W = options.width ?? 680,
@@ -129,7 +130,7 @@ export function renderScene(
       content += `<g transform="${matrix(m)}" opacity="${alpha}">${recipe && !n.text && ['rectangle', 'group', 'symbolMaster'].includes(n.type) ? paintSurface(leaf, recipe, base + '-surface-' + visits) : G.fragment(leaf, c.platform)}</g>`;
     for (const ch of n.children ?? []) walk(ch, owner, m, chain, ancestors, alpha);
   }
-  walk(c.root, c, [s, 0, 0, s, (W - w * s) / 2, (H - h * s) / 2], [], [c.id]);
+  walk(c.root, c, options.placement ?? [s, 0, 0, s, (W - w * s) / 2, (H - h * s) / 2], [], [c.id]);
   if (options.label)
     content += `<text x="20" y="${H - 16}" font-size="10" fill="${dark ? '#adc1d4' : '#5d7286'}" font-family="sans-serif">${options.glass === false ? '几何视图' : glassCount ? 'Liquid Glass · Web' : '静态状态'}</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${G.esc(G.clean(c.name))}" data-glass-count="${glassCount}"><defs>${defs}</defs>${content}</svg>`;

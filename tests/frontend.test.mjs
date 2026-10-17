@@ -141,3 +141,41 @@ test('all source definitions can generate bounded SVG scene markup without mutat
   assert.equal(JSON.stringify(db), before);
   assert.equal(JSON.stringify(data), mat);
 });
+
+test('dimension diagrams share the material scene rather than drawing hard shadow borders', () => {
+  let viewport;
+  const diagram = G.diagram(
+    pressed,
+    {
+      dimensions: true,
+      padding: true,
+      renderIllustration: (v) => {
+        viewport = v;
+        return renderScene(pressed, { ...v, background: 'plain' });
+      },
+    },
+    720,
+    300,
+  );
+  assert.deepEqual(viewport.placement.slice(0, 4), [3.3, 0, 0, 3.3]);
+  assert.match(diagram, /data-glass-count="1"/);
+  assert.match(diagram, /feDisplacementMap/);
+  assert.match(diagram, /stdDeviation="1.5"/);
+  assert.match(diagram, /64 pt/);
+  assert.match(diagram, /单位 pt/);
+  assert.doesNotMatch(diagram, /NaN|undefined|Infinity/);
+});
+
+test('pressed switch soft shadow and glass remain present at thumbnail scale', () => {
+  const svg = renderScene(pressed, {
+    width: 300,
+    height: 160,
+    maxScale: 1.35,
+    background: 'plain',
+  });
+  assert.match(svg, /data-glass-count="1"/);
+  assert.match(svg, /stdDeviation="1.5"/);
+  assert.match(svg, /feDisplacementMap/);
+  // No fabricated opaque fill: the lens retains the source zero-blur recipe.
+  assert.equal(store.glassRecords(pressed)[0].recipe.blurs[0].radius, 0);
+});

@@ -66,6 +66,12 @@ with sync_playwright() as pw:
     p.locator('.under-preview button').click();p.wait_for_timeout(180)
     ok('pressed state is directly selectable',lenses()=='1' and 'Pressed' in p.locator('.under-preview').inner_text())
     ok('source optics are visible',p.locator('.optics-grid').first.inner_text().find('0.075')>=0)
+    ok('dimension illustration has the same lens as the main preview',p.locator('.anatomy [data-glass-layer]').count()==1)
+    ok('dimension illustration keeps the shadow blur',p.locator('.anatomy feGaussianBlur[stdDeviation="1.5"]').count()>0)
+    p.locator('.anatomy').screenshot(path=str(out/'switch-dimensions.png'))
+    p.get_by_label('预览背景',exact=True).select_option('plain');p.wait_for_timeout(150)
+    p.locator('.preview-shell:not(.compact)').screenshot(path=str(out/'switch-pressed-plain.png'))
+    ok('zero-blur lens still samples the actual switch track',lenses()=='1' and p.locator('.preview-canvas feDisplacementMap').count()==1)
     p.get_by_label('预览背景',exact=True).select_option('grid')
     # Displacement-only pixel regression: same blur, tint and shadows, zero just the refraction scale.
     p.wait_for_timeout(150)

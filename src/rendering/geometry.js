@@ -281,6 +281,8 @@ const G = (() => {
       find(root);
       if (hit) {
         const { n, x, y } = hit;
+        if (options.renderIllustration)
+          lines += `<rect x="${X + x * s}" y="${Y + y * s}" width="${n.f[2] * s}" height="${n.f[3] * s}" fill="#007aff0b" stroke="#007aff" stroke-width="1.5"/>`;
         lines += measureX(
           X + x * s,
           X + (x + n.f[2]) * s,
@@ -290,7 +292,10 @@ const G = (() => {
         );
       }
     }
-    return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="组件尺寸标注：宽 ${fmt(w)}，高 ${fmt(h)}，单位 pt"><g transform="translate(${X} ${Y}) scale(${s})">${node(root, c.platform, { selected: options.selected, boxes: options.boxes }, 0, new Set([c.id]))}</g>${lines}</svg>`;
+    const illustration = options.renderIllustration
+      ? options.renderIllustration({ width, height, placement: [s, 0, 0, s, X, Y] })
+      : `<g transform="translate(${X} ${Y}) scale(${s})">${node(root, c.platform, { selected: options.selected, boxes: options.boxes }, 0, new Set([c.id]))}</g>`;
+    return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="组件尺寸标注：宽 ${fmt(w)}，高 ${fmt(h)}，单位 pt">${illustration}${lines}</svg>`;
   }
   function flatten(n, depth = 0) {
     return [{ node: n, depth }, ...(n.children || []).flatMap((c) => flatten(c, depth + 1))];

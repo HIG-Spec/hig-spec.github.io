@@ -15,6 +15,7 @@ import { metrics, flatten, locationOf, number, isStack } from '../specs/measurem
 import { exportComponent } from '../specs/exports';
 import { resolve } from '../specs/materials.js';
 import G from '../rendering/geometry.js';
+import { renderScene, type Matrix } from '../rendering/scene';
 import LivePreview from '../components/LivePreview.vue';
 import MaterialPanel from '../components/MaterialPanel.vue';
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ block: 'start' });
@@ -58,6 +59,8 @@ const geometry = computed(() =>
           boxes: false,
           selected: selectedLayer.value,
           appearance: current.value.facets.appearance,
+          renderIllustration: (viewport: { width: number; height: number; placement: Matrix }) =>
+            renderScene(current.value!, { ...viewport, background: 'plain' }),
         },
         720,
         300,

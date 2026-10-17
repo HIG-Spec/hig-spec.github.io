@@ -51,3 +51,16 @@ No continuous animation loop runs at rest. Catalogue previews are created as the
 ## Tests
 
 Unit tests render all 6,536 saved definitions structurally and verify finite output and immutable source snapshots. Browser tests compare pixels with displacement enabled and disabled while holding blur constant; the zero-blur switch verifies that the effect is real refraction, not merely frosting. These checks are not a pixel-parity comparison against UIKit or AppKit.
+
+## One visual rendering path
+
+The catalogue, main preview and annotated dimensions all use `renderScene`.
+Dimension labels use the source frame; a supplied placement matrix aligns the
+scene underneath those labels. A pressed switch can extend outside its track
+frame, as saved in the design file. This must not be resized to hide a rendering
+defect or replaced with an invented opaque thumb.
+
+The old geometry-only illustration rendered `Knob Shadow` as its unblurred
+border and omitted the transparent lens. Using that illustration for a material
+preview produced several hard, offset outlines. The annotated view now shares
+the full compositor rather than quietly reintroducing this bug.
