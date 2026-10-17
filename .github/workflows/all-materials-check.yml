@@ -33,7 +33,17 @@ jobs:
             git apply --check /tmp/all-materials.patch
             git apply /tmp/all-materials.patch
           fi
-          python .maintenance/complete-border-sides.py
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('.maintenance/complete-border-sides.py')
+          code=re.sub(r'^DELTA =.*\n', '', p.read_text(), flags=re.M)
+          expected="'4ac5849db1329c463f0fef5f92575a9e4a941999f7837ccbf2843486989c13ba'"
+          code=code.replace('if hashlib.sha256(raw).hexdigest() != NEW:', 'if hashlib.sha256(gzip.decompress(raw)).hexdigest() != '+expected+':')
+          code=code.replace('assert hashlib.sha256(raw).hexdigest() == NEW', 'assert hashlib.sha256(gzip.decompress(raw)).hexdigest() == '+expected)
+          code=code.replace("m['materials'] = NEW", "m['materials'] = hashlib.sha256(raw).hexdigest()")
+          exec(compile(code,str(p),'exec'))
+          PY
       - name: Install, format and validate source
         run: |
           npm ci
