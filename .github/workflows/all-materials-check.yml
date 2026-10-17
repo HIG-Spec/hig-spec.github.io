@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Verify and apply reviewed patch
+      - name: Verify and apply reviewed patches
         run: |
           python - <<'PY'
           import base64, gzip, hashlib
@@ -29,8 +29,11 @@ jobs:
           assert hashlib.sha256(patch).hexdigest() == '68e2532948832f2e6c2a7092bbd1fc73265da9cef4ae6a2968976722d3c9f54c'
           Path('/tmp/all-materials.patch').write_bytes(patch)
           PY
-          git apply --check /tmp/all-materials.patch
-          git apply /tmp/all-materials.patch
+          if [ ! -f tests/all-materials.test.mjs ]; then
+            git apply --check /tmp/all-materials.patch
+            git apply /tmp/all-materials.patch
+          fi
+          python .maintenance/complete-border-sides.py
       - name: Install, format and validate source
         run: |
           npm ci
@@ -48,7 +51,7 @@ jobs:
           python -m http.server 4173 --bind 127.0.0.1 --directory dist > /tmp/hig-http.log 2>&1 &
           pids=()
           for browser in chromium firefox webkit; do
-            (python -u tests/browser.py --browser "$browser" && python -u tests/materials-browser.py --browser "$browser") > "test-results/$browser.log" 2>&1 &
+            (timeout 420 python -u tests/browser.py --browser "$browser" && timeout 420 python -u tests/materials-browser.py --browser "$browser") > "test-results/$browser.log" 2>&1 &
             pids+=("$!")
           done
           failed=0
@@ -57,7 +60,7 @@ jobs:
           exit "$failed"
       - name: Save tested source on the review branch only
         run: |
-          git add src docs tests
+          git add src docs tests tools public/data
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'fix: unify material contours, backdrop effects and child states across all components'
