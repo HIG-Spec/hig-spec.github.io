@@ -30,8 +30,18 @@ assert old in text
 text = text.replace(old,new)
 text = text.replace("active.value=false;emit('state',null);", "active.value=false;activePointer=undefined;emit('state',null);")
 text = text.replace("onMounted(()=>{observer=", "onMounted(()=>{window.addEventListener('pointerup',finishPointer);window.addEventListener('pointercancel',finishPointer);window.addEventListener('blur',cancelPress);observer=")
-text = text.replace("onBeforeUnmount(()=>{observer?.disconnect();intersection?.disconnect();});", "onBeforeUnmount(()=>{window.removeEventListener('pointerup',finishPointer);window.removeEventListener('pointercancel',finishPointer);window.removeEventListener('blur',cancelPress);observer?.disconnect();intersection?.disconnect();});")
+text = text.replace("onBeforeUnmount(()=>{observer?.disconnect();intersection?.disconnect();});", "onBeforeUnmount(()=>{window.removeEventListener('pointerup',finishPointer);window.removeEventListener('pointercancel',finishPointer);window.removeEventListener('blur',cancelPress);cancelAnimationFrame(resizeFrame);observer?.disconnect();intersection?.disconnect();});")
 assert "window.removeEventListener('pointerup',finishPointer)" in text
+old_resize = "new ResizeObserver(entries=>{width.value=Math.max(120,Math.floor(entries[0].contentRect.width));})"
+new_resize = """new ResizeObserver(entries=>{
+ const nextWidth=Math.max(120,Math.floor(entries[0].contentRect.width));
+ if(nextWidth===width.value)return;
+ // The SVG depends on this width. Never resize it inside an observer delivery.
+ cancelAnimationFrame(resizeFrame);
+ resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;width.value=nextWidth;});
+})"""
+assert old_resize in text
+text = text.replace(old_resize,new_resize).replace('let intersection:IntersectionObserver|undefined;', 'let resizeFrame=0;\nlet intersection:IntersectionObserver|undefined;')
 p.write_text(text)
 
 p = Path('tests/browser.py')
