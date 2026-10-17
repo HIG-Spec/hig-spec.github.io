@@ -17,33 +17,28 @@ jobs:
           import base64, gzip, hashlib, json
           from pathlib import Path
           names = ['01', '02', '03', '04a', '04b', '05a', '05b-verified', '06a', '06b', '07a', '07b']
-          expected = ['24208fda62a4da92c126ca75503e1df50d5d6006','45cc8f720ad1798e45c39a5320c7189c5c473d89','c9dfb31c71780e33e7daa7e05d9088263a854e04','17c2dc55ee804621af1eb6a3e17dcf82c49952c3','8f0cd763f663e9e4bbeb248cb0ab2d82570cd3d1','4508e2974e28199951b32413be4716efc8aeb07a','9f1bc1e2fb6c583818c8c52f34f5aa6e1efc95bb','4dc919b743662bceb5a4f29260adfad93a790afc','0f83ca97ba6eb24feafdeafe990d64d11227eb45','879c88314d3a892994c73b3c419d6d5fdbd3cffc','72d873fc8e2ab863f2099d4d5f862263ede72a11']
-          parts = []
-          for name, want in zip(names, expected):
-              b = ''.join(Path(f'.staging/materials-{name}.b64').read_text().split()).encode('ascii')
-              actual = hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
-              print(name, len(b), actual, flush=True)
-              assert actual == want, f'Invalid payload part {name}'
-              parts.append(b)
-          raw = gzip.decompress(base64.b64decode(b''.join(parts), validate=True))
+          text = ''.join(''.join(Path(f'.staging/materials-{name}.b64').read_text().split()) for name in names)
+          raw = gzip.decompress(base64.b64decode(text, validate=True))
           assert hashlib.sha256(raw).hexdigest() == '38078848509fbc34b867115c799b1eb8ae49e86ab36cc841521156cac92090c7'
           files = json.loads(raw)
           allowed = {'assets/materials-data.js','assets/materials-specs.js','assets/materials-specs.css','tests/materials.test.cjs','tools/apply-material-specs.py','tools/extract-materials.py','docs/material-specs.md','.github/workflows/preview-regression.yml','.gitignore'}
           assert set(files) == allowed
           for path, text in files.items():
               assert isinstance(text, str)
+              if path.startswith('.github/'):
+                  continue
               p = Path(path)
               p.parent.mkdir(parents=True, exist_ok=True)
               p.write_text(text, encoding='utf-8')
-          print('Verified and restored all 9 source files.')
+          print('Verified source bundle; workflow configuration will be committed separately.')
           PY
       - name: Integrate without changing the geometry payload
         run: python tools/apply-material-specs.py
       - name: Run full regression suite
         run: node --test tests/*.test.cjs
-      - name: Stage only final files and check idempotence
+      - name: Stage final content and check idempotence
         run: |
-          git add index.html assets/materials-data.js assets/materials-specs.js assets/materials-specs.css tests/materials.test.cjs tools/apply-material-specs.py tools/extract-materials.py docs/material-specs.md .github/workflows/preview-regression.yml .gitignore
+          git add index.html assets/materials-data.js assets/materials-specs.js assets/materials-specs.css tests/materials.test.cjs tools/apply-material-specs.py tools/extract-materials.py docs/material-specs.md .gitignore
           python tools/apply-symbol-fix.py
           python tools/apply-material-specs.py
           git diff --exit-code
