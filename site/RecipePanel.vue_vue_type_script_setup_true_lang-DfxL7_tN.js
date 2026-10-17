@@ -1,0 +1,27 @@
+import{h as S,r as w,x as j,z as R,d as C,c as N,o as i,b as o,F as g,f as h,e as t,t as l,n as L,u as b,j as A,k as x,E as J,O as T}from"./index-D2BlrKtO.js";import{m as k,i as B,n as m}from"./measurements-B5xjRkNH.js";function I(n){return{format:"hig-spec/component/1",unit:"pt",source:R.value?.sources.find(u=>u.id===n.platform),component:j.get(n.previewOf??n.id)??n,...n.previewOf?{previewComposition:{label:n.previewLabel,sourceComponent:n.previewOf,substitutions:n.substitutions}}:{},materials:w(n)}}function $(n,u,c="application/json"){const f=new Blob([typeof n=="string"?n:JSON.stringify(n,null,2)],{type:c+";charset=utf-8"}),p=URL.createObjectURL(f),d=document.createElement("a");d.href=p,d.download=u,d.click(),setTimeout(()=>URL.revokeObjectURL(p),1e3)}function W(n,u){const c=S(n.name).replace(/[^a-zA-Z0-9-]+/g,"-");if(u==="json")return $(I(n),c+".json");if(u==="md")return $(`# ${S(n.name)}
+${n.previewOf?`
+子部件状态组合：${n.previewLabel}
+
+${JSON.stringify(n.substitutions)}
+`:""}
+| 参数 | 值 |
+|---|---|
+${k(n.root).map(([d,y])=>`| ${d} | ${y} |`).join(`
+`)}
+
+## 材质
+
+\`\`\`json
+${JSON.stringify(w(n),null,2)}
+\`\`\`
+`,c+".md","text/markdown");const f=B(n.root)?n.root.padding:void 0,p=d=>Number.isInteger(d)?d+".0":String(d);$(`// ${S(n.name)}
+// Source snapshot; sample frame in design points.
+${n.previewOf?`// Preview composition: ${n.previewLabel}
+// ${JSON.stringify(n.substitutions)}`:""}
+pub const SAMPLE_SIZE: [f32; 2] = [${p(n.root.f[2])}, ${p(n.root.f[3])}];
+${f?`pub const PADDING_TRBL: [f32; 4] = [${f.map(p).join(", ")}];
+`:""}
+// Full material recipe (unchanged source precision):
+pub const MATERIAL_JSON: &str = r###"${JSON.stringify(w(n))}"###;
+`,c+".rs","text/plain")}const P={class:"recipe-panel"},_={class:"subheading"},z={class:"optics-grid"},D={class:"disclosure"},U={class:"table-scroll"},F={class:"muted mono"},G={key:0,class:"muted small"},V={class:"muted"},X={class:"table-scroll"},Y={key:1},Z={key:0},q={key:1},H={class:"disclosure"},tt=C({__name:"RecipePanel",props:{recipe:{},title:{}},setup(n){const u=n,c=N(()=>u.recipe?.blurs??(u.recipe?.blur?[u.recipe.blur]:[])),f={radius:"模糊半径",distortion:"畸变",depth:"深度",saturation:"饱和度",brightness:"亮度",chromaticAberrationMultiplier:"色差",skipLightingEffects:"跳过内置光照",extraSamplingRegion:"额外采样区域",isCustomGlass:"自定义玻璃",isEnabled:"启用",isProgressive:"渐进",layeringType:"分层类型",center:"中心",motionAngle:"运动角度",type:"效果类型"},p=["radius","distortion","depth","saturation","brightness","chromaticAberrationMultiplier","skipLightingEffects","extraSamplingRegion","isCustomGlass","isEnabled","isProgressive","layeringType","type","center","motionAngle"],d=N(()=>[["fills","填充"],["shadows","阴影"],["innerShadows","内阴影"],["borders","边框"]].filter(([r])=>u.recipe?.[r]?.length)),y=T;function M(r){return typeof r=="boolean"?r?"开启":"关闭":m(r)}function O(r){return r?`rgba(${Math.round(r.red*255)}, ${Math.round(r.green*255)}, ${Math.round(r.blue*255)}, ${m(r.alpha)})`:"—"}return(r,e)=>(i(),o("div",P,[(i(!0),o(g,null,h(c.value,(a,v)=>(i(),o("div",{key:v,class:"optics"},[t("div",_,[t("h3",null,l(n.title??(a.type===4?"玻璃参数":"模糊参数")),1),t("span",{class:L(["tag",{positive:a.isEnabled}])},l(a.isEnabled?"启用":"未启用"),3)]),t("div",z,[(i(),o(g,null,h(["radius","distortion","depth","saturation","brightness","chromaticAberrationMultiplier"],s=>t("div",{key:s},[t("span",null,l(f[s]),1),t("strong",null,l(b(m)(a[s])),1),t("code",null,l(s==="chromaticAberrationMultiplier"?"chromaticAberration":s),1)])),64))]),t("details",D,[e[1]||(e[1]=t("summary",null,"全部参数",-1)),t("div",U,[t("table",null,[e[0]||(e[0]=t("thead",null,[t("tr",null,[t("th",null,"参数"),t("th",null,"值"),t("th",null,"字段")])],-1)),t("tbody",null,[(i(!0),o(g,null,h([...p,...Object.keys(a).filter(s=>s!=="_class"&&!p.includes(s))],s=>(i(),o("tr",{key:s},[t("td",null,l(f[s]??s),1),t("td",null,[t("code",null,l(M(a[s])),1)]),t("td",F,l(s),1)]))),128))])])])])]))),128)),c.value.length?A("",!0):(i(),o("p",G,"此样式使用填充与阴影。")),(i(!0),o(g,null,h(d.value,([a,v])=>(i(),o("details",{key:a,class:"disclosure"},[t("summary",null,[x(l(v)+" ",1),t("span",V,l(n.recipe[a].filter(s=>s.isEnabled).length)+" 项启用",1)]),t("div",X,[t("table",null,[t("thead",null,[t("tr",null,[e[6]||(e[6]=t("th",null,"层",-1)),e[7]||(e[7]=t("th",null,"状态",-1)),e[8]||(e[8]=t("th",null,"颜色",-1)),e[9]||(e[9]=t("th",null,"合成",-1)),e[10]||(e[10]=t("th",null,"不透明度",-1)),a.includes("hadow")?(i(),o(g,{key:0},[e[2]||(e[2]=t("th",null,"X",-1)),e[3]||(e[3]=t("th",null,"Y",-1)),e[4]||(e[4]=t("th",null,"Blur",-1)),e[5]||(e[5]=t("th",null,"Spread",-1))],64)):(i(),o("th",Y,"类型"))])]),t("tbody",null,[(i(!0),o(g,null,h(n.recipe[a],(s,E)=>(i(),o("tr",{key:E,class:L({dim:!s.isEnabled})},[t("td",null,[x(l(E),1),s.isInnerShadow?(i(),o("small",Z," 内")):A("",!0)]),t("td",null,l(s.isEnabled?"启用":"关闭"),1),t("td",null,[t("span",{class:"color-chip",style:J({background:O(s.color)})},null,4),t("code",null,l(O(s.color)),1)]),t("td",null,l(b(y)[s.contextSettings?.blendMode]??s.contextSettings?.blendMode),1),t("td",null,l(b(m)(s.contextSettings?.opacity)),1),a.includes("hadow")?(i(),o(g,{key:0},[t("td",null,l(b(m)(s.offsetX)),1),t("td",null,l(b(m)(s.offsetY)),1),t("td",null,l(b(m)(s.blurRadius)),1),t("td",null,l(b(m)(s.spread)),1)],64)):(i(),o("td",q,l(s.fillType===1?"渐变":b(m)(s.fillType??s.position)),1))],2))),128))])])])]))),128)),t("details",H,[e[11]||(e[11]=t("summary",null,"完整参数 JSON",-1)),t("pre",null,l(JSON.stringify(n.recipe,null,2)),1)])]))}});export{tt as _,$ as d,W as e};
+//# sourceMappingURL=RecipePanel.vue_vue_type_script_setup_true_lang-DfxL7_tN.js.map
