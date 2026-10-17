@@ -1,0 +1,6 @@
+# Source design files remain local.
+*.sketch
+*.fig
+# Uncompressed material extraction is generated locally on demand.
+assets/materials.json
+__pycache__/
