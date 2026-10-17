@@ -2,7 +2,7 @@
 """Extract material specs without artwork or fonts. Standard library only.
 
 Usage: python tools/extract-materials.py --ios '...sketch' --macos '...sketch'
-Runs against index.html's existing geometry snapshot and never rewrites that payload.
+Runs against the pinned geometry snapshot and never rewrites it.
 """
 import argparse, base64, copy, gzip, hashlib, json, re, zipfile
 from pathlib import Path
@@ -23,10 +23,8 @@ def material(style):
     # Full raw effect objects, including disabled effects, exact floats and enums.
     return {key: copy.deepcopy(style[key]) for key in ('blurs', 'blur', 'fills', 'shadows', 'innerShadows', 'borders', 'contextSettings', 'colorControls', 'borderOptions') if key in style}
 
-def build(html, paths):
-    encoded = re.search(r'<script id="geometry-payload"[^>]*>(.*?)</script>', html, re.S).group(1)
-    db = json.loads(gzip.decompress(base64.b64decode(encoded)))
-    result = {'format':'hig-material-specs/1', 'geometryPayloadSHA256':hashlib.sha256(encoded.encode()).hexdigest(),
+def build(db, payload_hash, paths):
+    result = {'format':'hig-material-specs/1', 'geometryPayloadSHA256':payload_hash,
               'sources':[], 'styles':[], 'recipes':[], 'bindings':{}, 'notes':[
                   'Exact serialized Sketch effect fields, not shader algorithms.',
                   'Array order and disabled records are preserved; no inferred rendering order across different effect arrays.',
@@ -63,7 +61,9 @@ def build(html, paths):
                 raw=at(rawRoot,n['path']);sid=raw.get('sharedStyleID');v=raw.get('style',{})
                 if raw.get('do_objectID')!=n['id']:raise ValueError('Mismatched layer ID')
                 isglass=any(b.get('type')==4 for b in v.get('blurs',[])) or sid in glassIDs
-                if isglass:
+                has_effect = bool(v.get('blurs') or v.get('blur') or v.get('shadows') or v.get('innerShadows'))
+                complex_border = len(v.get('borders', [])) > 1 or any(b.get('contextSettings',{}).get('blendMode',0) != 0 for b in v.get('borders',[]))
+                if isglass or has_effect or complex_border:
                     rows.append([ni,intern(material(v)),styleidx.get(sid)])
             if rows:result['bindings'][str(ci)]=rows
         result['sources'].append({'platform':platform,'filename':path.name,'sha256':digest,'sketchVersion':src['sketchVersion']})
@@ -72,9 +72,16 @@ def build(html, paths):
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--ios',required=True);ap.add_argument('--macos',required=True);args=ap.parse_args()
-    result=build((ROOT/'index.html').read_text(),{'ios':args.ios,'macos':args.macos})
-    out=ROOT/'assets'/'materials.json';out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps(result,ensure_ascii=False,separators=(',',':'))+'\n')
-    encoded=base64.b64encode(gzip.compress(out.read_bytes(),mtime=0)).decode()
-    (ROOT/'assets'/'materials-data.js').write_text('// Extracted material parameters only. Source identities are in the payload. No artwork or fonts.\n'+'globalThis.HIG_MATERIALS_GZIP = '+json.dumps(encoded)+';\n')
-    print(json.dumps(result['counts'],indent=2));print('Wrote',out)
+    data_dir = ROOT / 'public' / 'data'
+    if not data_dir.exists(): data_dir = ROOT / 'web' / 'public' / 'data'
+    manifest_path = data_dir / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text())
+    geometry_bytes = (data_dir/'geometry.json.gz').read_bytes()
+    if hashlib.sha256(geometry_bytes).hexdigest()!=manifest['geometry']: raise ValueError('Geometry digest mismatch')
+    db = json.loads(gzip.decompress(geometry_bytes))
+    result=build(db,manifest['geometryPayloadSHA256'],{'ios':args.ios,'macos':args.macos})
+    output = gzip.compress((json.dumps(result,ensure_ascii=False,separators=(',',':'))+'\n').encode(),mtime=0)
+    (data_dir/'materials.json.gz').write_bytes(output)
+    manifest['materials']=hashlib.sha256(output).hexdigest()
+    manifest_path.write_text(json.dumps(manifest,indent=2)+'\n')
+    print(json.dumps(result['counts'],indent=2))

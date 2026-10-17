@@ -1,0 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+export const root = new URL('../', import.meta.url);
+const base = existsSync(new URL('web/public/', root)) ? 'web/public/' : 'public/';
+export const dataURL = new URL(base + 'data/', root);
+export const compressed = readFileSync(new URL('geometry.json.gz', dataURL));
+export const db = JSON.parse(gunzipSync(compressed));
+export const data = JSON.parse(gunzipSync(readFileSync(new URL('materials.json.gz', dataURL))));
+export const manifest = JSON.parse(readFileSync(new URL('manifest.json', dataURL)));
+export const hash = (b) => createHash('sha256').update(b).digest('hex');

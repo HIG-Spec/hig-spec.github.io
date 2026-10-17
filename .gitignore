@@ -1,6 +1,10 @@
-# Source design files remain local.
+node_modules/
+dist/
+.offline/
+test-results/
 *.sketch
 *.fig
-# Uncompressed material extraction is generated locally on demand.
-assets/materials.json
+*.pyc
 __pycache__/
+.staging/
+vite.offline.config.ts

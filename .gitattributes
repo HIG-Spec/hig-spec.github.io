@@ -1,0 +1,4 @@
+site/** linguist-generated=true
+index.html linguist-generated=true
+data/** linguist-generated=true
+*.gz binary
