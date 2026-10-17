@@ -2,7 +2,7 @@ name: Validate frontend migration
 on:
   push:
     branches: [refactor/frontend-glass]
-    paths: [.github/workflows/frontend-integrate.yml]
+    paths: [.github/workflows/frontend-integrate.yml, .staging/finalize-frontend.py]
 permissions:
   contents: write
 concurrency:
@@ -19,19 +19,8 @@ jobs:
           node-version: '22'
       - name: Reconstruct verified sources and preserve original geometry
         run: python .staging/integrate-frontend.py
-      - name: Apply final development defaults and documentation corrections
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path('README.md')
-          p.write_text(p.read_text().replace('pythontests/','python tests/').replace('pythontools/','python tools/').replace('-rtests/','-r tests/'))
-          p=Path('package.json');data=json.loads(p.read_text())
-          data['devDependencies']['vite']='7.3.7'
-          data['scripts']['dev']='vite --host 127.0.0.1'
-          data['scripts']['preview']='vite preview --host 127.0.0.1'
-          p.write_text(json.dumps(data,indent=2)+'\n')
-          PY
+      - name: Apply final defaults and browser diagnostics
+        run: python .staging/finalize-frontend.py
       - name: Install pinned dependencies and format source modules
         run: |
           npm install
