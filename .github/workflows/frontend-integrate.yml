@@ -1,0 +1,57 @@
+name: Validate frontend migration
+on:
+  push:
+    branches: [refactor/frontend-glass]
+    paths: [.github/workflows/frontend-integrate.yml]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct verified sources and preserve original geometry
+        run: python .staging/integrate-frontend.py
+      - name: Install pinned dependencies and format source modules
+        run: |
+          npm install
+          npm run format
+          npm run format:check
+      - name: Check types, data, exports, and renderer
+        run: |
+          npm test
+          npm run build
+          npm run publish:static
+      - name: Install browser test engines
+        run: |
+          python -m pip install -r tests/requirements.txt
+          python -m playwright install --with-deps chromium firefox webkit
+      - name: Test production HTTP site in Chromium, Firefox, and WebKit
+        run: |
+          python -m http.server 4173 --directory dist > /tmp/http.log 2>&1 &
+          for browser in chromium firefox webkit; do
+            python tests/browser.py --browser "$browser"
+          done
+      - name: Save only verified application and generated files to feature branch
+        run: |
+          git add -A src web public scripts tests tools docs assets README.md THIRD_PARTY.md .gitignore .gitattributes .prettierrc.json package.json package-lock.json tsconfig.json vite.config.ts index.html site data favicon.svg .nojekyll
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'refactor: migrate specs to Vue and Vite with real refractive previews'
+          git push origin HEAD:refactor/frontend-glass
+      - name: Package reviewable sources
+        if: always()
+        run: |
+          tar --exclude='./node_modules' --exclude='./.git' --exclude='./.staging' --exclude='./test-results' --exclude='./dist' -czf /tmp/frontend-verified-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-verification
+          path: |
+            /tmp/frontend-verified-source.tar.gz
+            test-results/
+          retention-days: 3
