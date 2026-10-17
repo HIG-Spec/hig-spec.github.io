@@ -9,7 +9,7 @@ Readers access shared materials at `/#/materials/liquid-glass` and component-loc
 | iOS / iPadOS | Apple iOS 27 UI Kit.sketch   | `465512cb7d9fa591844c32cda133c52ea2e69a143d7cfbb958d5b3ef180b948c` |
 | macOS        | Apple macOS 27 UI Kit.sketch | `8f83805217d979dc560d008fce66c1c77014f631cccff8978f31baf1d7ef3b28` |
 
-The geometry contains 6,536 definitions grouped into 36 families. The material snapshot contains 38 shared Liquid Glass catalogue records, 14 supporting shared styles, 198 distinct effect recipes and 1,933 directly bound effect-bearing layers in 1,342 definitions. Effect-bearing layers include ordinary blur/shadow/border support layers: **1,933 is not a count of glass surfaces**.
+The geometry contains 6,536 definitions grouped into 36 families. The material snapshot contains 38 shared Liquid Glass catalogue records, 14 supporting shared styles, 214 distinct effect recipes and 2,043 directly bound effect-bearing layers in 1,398 definitions. Effect-bearing layers include ordinary blur/shadow/border support layers: **2,043 is not a count of glass surfaces**.
 
 Names are not primary keys. Both macOS styles named `Liquid Glass/Light/Regular - Small - Tinted` remain distinct by source ID. The iOS Light/Medium blur value of 15 and macOS value of 30 are retained separately.
 

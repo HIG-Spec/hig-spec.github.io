@@ -1,5 +1,5 @@
 import type { Definition } from '../data/types';
-import { database, clean } from '../data/store';
+import { database, byID, clean } from '../data/store';
 import { resolve } from './materials.js';
 import { metrics, isStack } from './measurements';
 export function componentExport(c: Definition) {
@@ -7,7 +7,16 @@ export function componentExport(c: Definition) {
     format: 'hig-spec/component/1',
     unit: 'pt',
     source: database.value?.sources.find((s) => s.id === c.platform),
-    component: c,
+    component: byID.get(c.previewOf ?? c.id) ?? c,
+    ...(c.previewOf
+      ? {
+          previewComposition: {
+            label: c.previewLabel,
+            sourceComponent: c.previewOf,
+            substitutions: c.substitutions,
+          },
+        }
+      : {}),
     materials: resolve(c),
   };
 }
@@ -27,7 +36,9 @@ export function exportComponent(c: Definition, format: 'json' | 'md' | 'rs') {
   if (format === 'json') return download(componentExport(c), base + '.json');
   if (format === 'md')
     return download(
-      `# ${clean(c.name)}\n\n| 参数 | 值 |\n|---|---|\n${metrics(c.root)
+      `# ${clean(c.name)}\n${c.previewOf ? `\n子部件状态组合：${c.previewLabel}\n\n${JSON.stringify(c.substitutions)}\n` : ''}\n| 参数 | 值 |\n|---|---|\n${metrics(
+        c.root,
+      )
         .map(([k, v]) => `| ${k} | ${v} |`)
         .join('\n')}\n\n## 材质\n\n\`\`\`json\n${JSON.stringify(resolve(c), null, 2)}\n\`\`\`\n`,
       base + '.md',
@@ -36,7 +47,7 @@ export function exportComponent(c: Definition, format: 'json' | 'md' | 'rs') {
   const p = isStack(c.root) ? c.root.padding : undefined;
   const f = (x: number) => (Number.isInteger(x) ? x + '.0' : String(x));
   download(
-    `// ${clean(c.name)}\n// Source snapshot; sample frame in design points.\npub const SAMPLE_SIZE: [f32; 2] = [${f(c.root.f[2])}, ${f(c.root.f[3])}];\n${p ? `pub const PADDING_TRBL: [f32; 4] = [${p.map(f).join(', ')}];\n` : ''}\n// Full material recipe (unchanged source precision):\npub const MATERIAL_JSON: &str = r###"${JSON.stringify(resolve(c))}"###;\n`,
+    `// ${clean(c.name)}\n// Source snapshot; sample frame in design points.\n${c.previewOf ? `// Preview composition: ${c.previewLabel}\n// ${JSON.stringify(c.substitutions)}` : ''}\npub const SAMPLE_SIZE: [f32; 2] = [${f(c.root.f[2])}, ${f(c.root.f[3])}];\n${p ? `pub const PADDING_TRBL: [f32; 4] = [${p.map(f).join(', ')}];\n` : ''}\n// Full material recipe (unchanged source precision):\npub const MATERIAL_JSON: &str = r###"${JSON.stringify(resolve(c))}"###;\n`,
     base + '.rs',
     'text/plain',
   );

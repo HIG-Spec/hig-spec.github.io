@@ -1,7 +1,8 @@
 import { shallowRef, computed } from 'vue';
 import type { Database, Definition, MaterialData, Platform } from './types';
-import { initData, resolve } from '../specs/materials.js';
+import { initData, resolve, flatten } from '../specs/materials.js';
 import G from '../rendering/geometry.js';
+import Symbols from '../rendering/symbols.js';
 export const database = shallowRef<Database>();
 export const materials = shallowRef<MaterialData>();
 export const loadError = shallowRef('');
@@ -101,13 +102,144 @@ export function glassVariants(c: Definition) {
     .filter((d) => d.facets.appearance === c.facets.appearance && glassRecords(d).length)
     .sort((a, b) => Number(a.internal) - Number(b.internal));
 }
-export function statePartner(c: Definition, pressed: boolean) {
-  if (c.family !== 'switches') return undefined;
-  const prefix = c.name.replace(/\d+ - (Idle|Pressed|Clicked)$/, '');
-  return familyDefinitions(c.family, c.platform).find(
-    (x) =>
-      x.name.replace(/\d+ - (Idle|Pressed|Clicked)$/, '') === prefix &&
-      (pressed ? /\d+ - (Pressed|Clicked)$/.test(x.name) : /\d+ - Idle$/.test(x.name)),
+// Match a saved interaction state without crossing size, platform, selection or appearance.
+const statePattern =
+  /(?:\d+\s*-\s*)?\b(Idle|Enabled|Default|Pressed|Clicked|Touch|Highlighted|Selected|Unselected)\b/g;
+const pressPattern = /\b(Pressed|Clicked|Touch|Highlighted)\b/;
+const stateKey = (c: Definition) =>
+  `${c.platform}:${c.family}:${c.name.replace(statePattern, '{state}')}`;
+const stateCache = new Map<string, Definition[]>();
+let stateDatabase: Database | undefined;
+const stateIndex = new Map<string, Definition[]>();
+const catalogueCache = new Map<string, Definition | undefined>();
+function prepareStates() {
+  if (stateDatabase === database.value) return;
+  stateDatabase = database.value;
+  stateCache.clear();
+  stateIndex.clear();
+  catalogueCache.clear();
+  for (const d of database.value?.components ?? []) {
+    const k = stateKey(d);
+    const rows = stateIndex.get(k) ?? [];
+    rows.push(d);
+    stateIndex.set(k, rows);
+  }
+}
+function directPartner(c: Definition, pressed: boolean) {
+  prepareStates();
+  if (/Disabled|Inactive/.test(c.name)) return;
+  const key = stateKey(c);
+  return (stateIndex.get(key) ?? []).find(
+    (d) =>
+      d.id !== c.id &&
+      (pressed
+        ? pressPattern.test(d.name)
+        : /\b(Idle|Enabled|Default|Selected|Unselected)\b/.test(d.name)),
+  );
+}
+
+/** Saved child states shown in their real parent context; source definitions stay immutable. */
+export function interactionVariants(component: Definition): Definition[] {
+  prepareStates();
+  const c = byID.get(component.previewOf ?? component.id) ?? component;
+  if (stateCache.has(c.id)) return stateCache.get(c.id)!;
+  const variants: Definition[] = [];
+  const direct = directPartner(c, true);
+  if (direct) variants.push(direct);
+  if (/Disabled|Inactive/.test(c.name)) {
+    stateCache.set(c.id, variants);
+    return variants;
+  }
+  let visits = 0;
+  function visit(n: any, chain: string[], names: string[], ancestors: string[]) {
+    if (n.hidden || ++visits > 20000 || ancestors.length > 20) return;
+    if (n.type === 'symbolInstance') {
+      const target = bySymbol.get(`${c.platform}:${n.symbolID}`);
+      if (!target || ancestors.includes(target.id)) return;
+      const path = [...chain, n.id],
+        labels = [...names, clean(n.name)];
+      const partner = directPartner(target, true);
+      if (partner && glassRecords(partner).length) {
+        const root = structuredClone(c.root);
+        const top = flatten(root).find((v: any) => v.id === path[0]);
+        if (top) {
+          // Instance overrides are addressed by source node IDs. Translate matching text
+          // slots across state masters so e.g. Item 3 never becomes the default Label.
+          const oldNodes = flatten(target.root),
+            newNodes = flatten(partner.root);
+          const mapping = new Map(
+            oldNodes.map((old: any) => [
+              old.id,
+              newNodes.find((v: any) => v.name === old.name && v.type === old.type)?.id ?? old.id,
+            ]),
+          );
+          if (path.length === 1) {
+            top.symbolID = partner.symbolID;
+            top.overrides = (top.overrides ?? []).map((o: any) => ({
+              ...o,
+              overrideName: String(o.overrideName).replace(
+                /[A-F0-9-]{36}/g,
+                (id: string) => (mapping.get(id) as string) ?? id,
+              ),
+            }));
+          } else {
+            const overrideName = path.slice(1).join('/') + '_symbolID';
+            top.overrides = [
+              ...(top.overrides ?? []).filter((o: any) => o.overrideName !== overrideName),
+              { overrideName, value: partner.symbolID },
+            ];
+          }
+          const key = path.join('/') + ':' + partner.symbolID;
+          variants.push({
+            ...c,
+            id: c.id + '@' + key,
+            root,
+            previewOf: c.id,
+            previewKey: key,
+            previewLabel: labels.join(' / ') + ' · ' + clean(partner.name).split('/').pop(),
+            substitutions: [{ instances: path, from: target.id, to: partner.id }],
+          });
+        }
+      }
+      visit(Symbols.applyOverrides(target.root, n.overrides), path, labels, [
+        ...ancestors,
+        target.id,
+      ]);
+    } else for (const child of n.children ?? []) visit(child, chain, names, ancestors);
+  }
+  visit(c.root, [], [], [c.id]);
+  // Selected segments/knobs are better first examples than unselected siblings.
+  variants.sort(
+    (a, b) =>
+      Number(/Unselected/.test(a.previewLabel ?? a.name)) -
+      Number(/Unselected/.test(b.previewLabel ?? b.name)),
+  );
+  stateCache.set(c.id, variants);
+  return variants;
+}
+export function statePartner(c: Definition, pressed: boolean): Definition | undefined {
+  if (!pressed && c.previewOf) return byID.get(c.previewOf);
+  return directPartner(c, pressed) ?? (pressed ? interactionVariants(c)[0] : undefined);
+}
+export function catalogueDefinition(family: string, platform: Platform = 'ios') {
+  prepareStates();
+  const key = family + ':' + platform;
+  if (catalogueCache.has(key)) return catalogueCache.get(key);
+  const save = (d: Definition | undefined) => {
+    catalogueCache.set(key, d);
+    return d;
+  };
+  const c = defaultDefinition(family, platform);
+  if (!c || glassRecords(c).length) return save(c);
+  const pressed = interactionVariants(c).find((v) => glassRecords(v).length);
+  if (pressed) return save(pressed);
+  // Prefer a complete saved control, never a disconnected internal glass swatch.
+  return save(
+    familyDefinitions(family, c.platform)
+      .filter(
+        (v) => !v.internal && v.facets.appearance === c.facets.appearance && glassRecords(v).length,
+      )
+      .sort((a, b) => a.name.length - b.name.length)[0] ?? c,
   );
 }
 export function togglePartner(c: Definition) {

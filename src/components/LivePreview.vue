@@ -37,6 +37,7 @@ const switchable = computed(
     !props.component.internal &&
     !/Disabled/.test(props.component.name),
 );
+const interactive = computed(() => switchable.value || !!statePartner(props.component, true));
 const on = computed(() => /\/On\/|, On,/.test(props.component.name));
 const effectCount = computed(() =>
   props.recipe
@@ -45,7 +46,7 @@ const effectCount = computed(() =>
 );
 let activePointer: number | undefined;
 function press(e: PointerEvent) {
-  if (!switchable.value || e.button !== 0 || active.value) return;
+  if (!interactive.value || e.button !== 0 || active.value) return;
   // Capture is optional: WebKit may already have retired this pointer ID.
   // Window-level release/cancel listeners keep an uncaptured drag from sticking.
   try {
@@ -71,7 +72,7 @@ function release(cancel = false) {
   active.value = false;
   activePointer = undefined;
   emit('state', null);
-  if (!cancel) {
+  if (!cancel && switchable.value) {
     const partner = togglePartner(statePartner(previous, false) ?? previous);
     if (partner) emit('select', partner);
   }
@@ -80,7 +81,12 @@ function release(cancel = false) {
 function keyboard(e: KeyboardEvent) {
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
-    const c = togglePartner(props.component);
+    const c = switchable.value
+      ? togglePartner(props.component)
+      : statePartner(
+          props.component,
+          !props.component.previewOf && !/Pressed|Clicked|Touch/.test(props.component.name),
+        );
     if (c) emit('select', c);
   }
 }
@@ -139,22 +145,23 @@ onBeforeUnmount(() => {
     </div>
     <div ref="host" class="preview-canvas" :class="{ pressing: active }" v-html="html"></div>
     <button
-      v-if="switchable && !compact"
-      class="switch-hit"
-      role="switch"
-      :aria-checked="on"
+      v-if="interactive && !compact"
+      class="interaction-hit"
+      :class="{ 'switch-hit': switchable }"
+      :role="switchable ? 'switch' : 'button'"
+      :aria-checked="switchable ? on : undefined"
       :aria-label="clean(component.name) + '，按住查看玻璃态'"
       @pointerdown="press"
       @pointerup="release(false)"
       @pointercancel="release(true)"
       @lostpointercapture="release(true)"
       @keydown="keyboard"
-      title="按住查看玻璃态，松开切换"
+      :title="switchable ? '按住查看玻璃态，松开切换' : '按住查看按压态，松开恢复'"
     ></button>
     <div v-if="!compact" class="preview-caption">
       <span
         >{{ effectCount ? `${effectCount} 个玻璃图层` : '静态状态'
-        }}<span v-if="switchable"> · 按住开关查看按压态</span></span
+        }}<span v-if="interactive"> · 按住预览查看按压态</span></span
       ><label
         >背景位置
         <input

@@ -24,17 +24,19 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+      - name: Audit all source materials and build family coverage cases
+        run: node tests/material-coverage.mjs
       - name: Install test browsers
         run: |
           python -m pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium firefox webkit
-      - name: Check production HTTP pages, dimensions, states and refraction
+      - name: Check production pages, every family, saved states and refraction pixels
         run: |
           python -m http.server 4173 --bind 127.0.0.1 --directory dist > /tmp/hig-http.log 2>&1 &
           mkdir -p test-results
           pids=()
           for browser in chromium firefox webkit; do
-            python -u tests/browser.py --browser "$browser" > "test-results/$browser.log" 2>&1 &
+            (python -u tests/browser.py --browser "$browser" && python -u tests/materials-browser.py --browser "$browser") > "test-results/$browser.log" 2>&1 &
             pids+=("$!")
           done
           failed=0
@@ -69,6 +71,14 @@ jobs:
         with:
           name: static-site
           path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: browser-checks
+          path: /tmp/source-browser-checks
+      - name: Restore family coverage cases for live verification
+        run: |
+          mkdir -p test-results
+          cp /tmp/source-browser-checks/material-coverage.json test-results/material-coverage.json
       - name: Reject stale source builds
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
       - name: Refresh only generated root files
@@ -97,11 +107,12 @@ jobs:
           done
           echo 'The public site has not yet served the expected HTML.' >&2
           exit 1
-      - name: Verify the public deployment in Chromium
+      - name: Verify the public deployment and all material families in Chromium
         run: |
           python -m pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium
           python -u tests/browser.py --url "https://hig-spec.github.io/?build=$GITHUB_SHA" --browser chromium
+          python -u tests/materials-browser.py --url "https://hig-spec.github.io/?build=$GITHUB_SHA" --browser chromium
       - uses: actions/upload-artifact@v4
         if: always()
         with:

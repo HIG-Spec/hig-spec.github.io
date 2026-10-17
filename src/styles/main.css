@@ -673,7 +673,7 @@ article,
 .preview-caption input {
   width: 76px;
 }
-.switch-hit {
+.interaction-hit {
   position: absolute;
   left: 50%;
   top: calc(50% + 7px);
@@ -683,7 +683,7 @@ article,
   border-radius: 99px;
   touch-action: none;
 }
-.switch-hit:focus-visible {
+.interaction-hit:focus-visible {
   outline-offset: 4px;
 }
 .tabs {
@@ -1485,7 +1485,7 @@ tbody tr:hover {
   .preview-caption input {
     width: 56px;
   }
-  .switch-hit {
+  .interaction-hit {
     height: 130px;
     width: 65%;
     max-width: 240px;
@@ -1782,4 +1782,15 @@ tbody tr:hover {
   .detail-heading h1 {
     font-size: 37px;
   }
+}
+
+.interaction-states {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 22px;
+}
+.interaction-states .selected {
+  color: var(--blue);
+  background: var(--blue-soft);
 }

@@ -64,3 +64,39 @@ The old geometry-only illustration rendered `Knob Shadow` as its unblurred
 border and omitted the transparent lens. Using that illustration for a material
 preview produced several hard, offset outlines. The annotated view now shares
 the full compositor rather than quietly reintroducing this bug.
+
+## Full-library material rendering
+
+All material-bearing layers use the same shape/surface compositor, irrespective
+of component family. Glass and background blur are separate operations; background
+blur is not relabelled as Liquid Glass. Ovals, paths, nonuniform corners and compound
+shapes provide their actual clip contours. Construction shapes in a painted compound
+shape are no longer rendered again as opaque children. Fills, borders and shadows
+use the same contour. Text paint is applied to glyphs, not their bounding rectangles.
+The displacement field remains a rounded-rectangle approximation for compound paths;
+clip contours do not imply exact native optical normals or Boolean geometry parity.
+
+Each surface samples previous overlapping paint operations. Scene nodes are shared
+by reference; disjoint controls do not recursively duplicate the whole backdrop.
+
+State discovery is generic across families, preserving platform, appearance, size,
+style and saved On/Off selection. When only a child Pressed/Clicked/Touch master
+exists, the preview substitutes that saved Symbol within its parent without changing
+the parent's measured frame. The reader can select the child target explicitly,
+press to preview temporarily, or use the same composed-state deep link from the
+catalogue. JSON exports keep the unchanged source component and record those
+substitutions separately in `previewComposition`. These combinations are preview
+compositions, not new purportedly native component specifications. Disabled and
+inactive states are never given an invented active-glass effect.
+
+`tests/all-materials.test.mjs` checks visible glass coverage for every one of the
+6,536 pinned definitions. `node tests/material-coverage.mjs` produces the family /
+platform cases and inventory in `test-results/material-coverage.json`.
+`python tests/materials-browser.py --browser chromium` exercises those cases over
+production HTTP, including annotations, real pixel changes, contextual slider and
+segment states, exports and mobile layout. Firefox and WebKit run the same suite.
+
+The source audit also retains per-side border fields on 122 layers. Missing
+side metadata previously turned single bottom/right separators into rectangular
+outlines. The material snapshot adds the 110 missing bindings; existing source
+geometry, glass recipes and parameter values remain unchanged.

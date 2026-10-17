@@ -1,4 +1,4 @@
-import G from './geometry.js';
+import { shape } from './shape';
 import type { Layer } from '../data/types';
 export const blendNames: Record<number, string> = {
   0: 'Normal',
@@ -49,13 +49,9 @@ const point = (s: string) =>
     .split(',')
     .map(Number);
 export function paintSurface(n: Layer, recipe: any, id: string) {
-  const w = n.f[2],
-    h = n.f[3],
-    r = G.radius(n)?.values?.[0] ?? 0;
   let defs = '',
     body = '';
-  const rect = (attrs: string, inset = 0) =>
-    `<rect x="${inset}" y="${inset}" width="${Math.max(0, w - inset * 2)}" height="${Math.max(0, h - inset * 2)}" rx="${Math.max(0, r - inset)}" ${attrs}/>`;
+  const rect = (attrs: string, inset = 0) => shape(n, attrs, inset);
   const blend = (e: any) =>
     `style="mix-blend-mode:${blendCSS[e.contextSettings?.blendMode ?? 0] ?? 'normal'}"`;
   function paint(e: any, i: string) {
@@ -105,10 +101,28 @@ export function paintSurface(n: Layer, recipe: any, id: string) {
     if (!b.isEnabled) return;
     const t = b.thickness ?? 0,
       inset = b.position === 1 ? t / 2 : b.position === 2 ? -t / 2 : 0;
-    body += rect(
-      `fill="none" stroke="${paint(b, 'b' + i)}" stroke-width="${t}" ${blend(b)}`,
-      inset,
-    );
+    if (b.sides && ['rectangle', 'group', 'symbolMaster', 'bitmap'].includes(n.type)) {
+      // These snapshots use zero for an enabled side and FLT_MAX for a disabled one.
+      // Keep saved side fields in specs; never close a one-sided border.
+      const w = n.f[2],
+        h = n.f[3];
+      const sides = [
+        ['top', `M0 ${inset}H${w}`],
+        ['right', `M${w - inset} 0V${h}`],
+        ['bottom', `M0 ${h - inset}H${w}`],
+        ['left', `M${inset} 0V${h}`],
+      ];
+      for (const [side, d] of sides) {
+        const offset = b.sides[side + 'Inset'] ?? 0;
+        const thickness = Math.max(0, t - offset);
+        if (thickness > 0)
+          body += `<path d="${d}" data-border-side="${side}" fill="none" stroke="${paint(b, 'b' + i + '-' + side)}" stroke-width="${thickness}" ${blend(b)}/>`;
+      }
+    } else
+      body += rect(
+        `fill="none" stroke="${paint(b, 'b' + i)}" stroke-width="${t}" ${blend(b)}`,
+        inset,
+      );
   });
   const b = (recipe.blurs ?? []).find((b: any) => b.isEnabled && b.type === 0);
   if (b) {

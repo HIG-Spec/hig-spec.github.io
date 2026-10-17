@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import {
   database,
-  defaultDefinition,
+  catalogueDefinition,
   familyDefinitions,
   glassRecords,
   categories,
@@ -21,16 +21,13 @@ const families = computed(
         (f.zh + f.name).toLowerCase().includes(query.value.toLowerCase()),
     ) ?? [],
 );
-const preview = (family: string) => {
-  const c = defaultDefinition(family, platform.value === 'all' ? 'ios' : platform.value);
-  if (!c) return;
-  if (family === 'switches')
-    return (
-      familyDefinitions(family, c.platform).find(
-        (d) => d.name === 'Toggles/Light/On/3 - Pressed',
-      ) ?? c
-    );
-  return c;
+const preview = (family: string) =>
+  catalogueDefinition(family, platform.value === 'all' ? 'ios' : platform.value);
+const previewLink = (family: string) => {
+  const c = preview(family);
+  const query = new URLSearchParams({ v: c?.previewOf ?? c?.id ?? '' });
+  if (c?.previewKey) query.set('interaction', c.previewKey);
+  return `#/components/${family}?${query}`;
 };
 const descriptions: Record<string, string> = {
   buttons: '文字、图标与容器',
@@ -86,11 +83,7 @@ const descriptions: Record<string, string> = {
       />
     </div>
     <div class="catalog-grid">
-      <a
-        v-for="f in families"
-        :key="f.id"
-        class="catalog-card"
-        :href="`#/components/${f.id}${platform !== 'all' ? '?platform=' + platform : ''}`"
+      <a v-for="f in families" :key="f.id" class="catalog-card" :href="previewLink(f.id)"
         ><div class="card-visual">
           <LivePreview v-if="preview(f.id)" :component="preview(f.id)!" compact />
         </div>
@@ -98,6 +91,9 @@ const descriptions: Record<string, string> = {
           <h2>{{ f.zh }} <span>↗</span></h2>
           <p>{{ f.name }}</p>
           <small>{{ descriptions[f.id] ?? '尺寸、布局与状态规格' }}</small>
+          <span v-if="preview(f.id) && glassRecords(preview(f.id)!).length" class="tag positive"
+            >Liquid Glass{{ preview(f.id)?.previewOf ? ' · 交互态' : '' }}</span
+          >
         </div></a
       >
     </div>

@@ -31,6 +31,7 @@ def build(db, payload_hash, paths):
                   'Bindings use component and preorder node indices in the hashed geometry snapshot.',
                   'No runtime layout reflow, fonts, images or vector artwork included.']}
     pool = {}
+    per_side = []
     def intern(value):
         key = json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False)
         if key not in pool:
@@ -63,10 +64,17 @@ def build(db, payload_hash, paths):
                 isglass=any(b.get('type')==4 for b in v.get('blurs',[])) or sid in glassIDs
                 has_effect = bool(v.get('blurs') or v.get('blur') or v.get('shadows') or v.get('innerShadows'))
                 complex_border = len(v.get('borders', [])) > 1 or any(b.get('contextSettings',{}).get('blendMode',0) != 0 for b in v.get('borders',[]))
+                if any(b.get('isEnabled') and b.get('sides') for b in v.get('borders', [])) and not (isglass or has_effect or complex_border):
+                    per_side.append((ci, ni, material(v), styleidx.get(sid)))
                 if isglass or has_effect or complex_border:
                     rows.append([ni,intern(material(v)),styleidx.get(sid)])
             if rows:result['bindings'][str(ci)]=rows
         result['sources'].append({'platform':platform,'filename':path.name,'sha256':digest,'sketchVersion':src['sketchVersion']})
+    # Append supplementary border recipes without renumbering existing bindings.
+    for ci, ni, value, sid in per_side:
+        rows = result['bindings'].setdefault(str(ci), [])
+        rows.append([ni, intern(value), sid])
+        rows.sort(key=lambda row: row[0])
     result['counts']={'catalogStyles':sum(s['catalog'] for s in result['styles']),'supportStyles':sum(not s['catalog'] for s in result['styles']),'recipes':len(result['recipes']),'directDefinitions':len(result['bindings']),'directLayers':sum(map(len,result['bindings'].values()))}
     return result
 
