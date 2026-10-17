@@ -1,0 +1,138 @@
+--- a/src/rendering/scene.ts
++++ b/src/rendering/scene.ts
+@@ -6,7 +6,7 @@
+ import { bySymbol } from '../data/store';
+ import type { Definition, Layer } from '../data/types';
+ export type Background = 'aurora' | 'grid' | 'plain';
+-type Matrix = [number, number, number, number, number, number];
++export type Matrix = [number, number, number, number, number, number];
+ const mul = (a: Matrix, b: Matrix): Matrix => [
+   a[0] * b[0] + a[2] * b[1],
+   a[1] * b[0] + a[3] * b[1],
+@@ -39,6 +39,7 @@
+     label?: boolean;
+     phase?: number;
+     recipe?: any;
++    placement?: Matrix;
+   } = {},
+ ) {
+   const W = options.width ?? 680,
+@@ -129,7 +130,7 @@
+       content += `<g transform="${matrix(m)}" opacity="${alpha}">${recipe && !n.text && ['rectangle', 'group', 'symbolMaster'].includes(n.type) ? paintSurface(leaf, recipe, base + '-surface-' + visits) : G.fragment(leaf, c.platform)}</g>`;
+     for (const ch of n.children ?? []) walk(ch, owner, m, chain, ancestors, alpha);
+   }
+-  walk(c.root, c, [s, 0, 0, s, (W - w * s) / 2, (H - h * s) / 2], [], [c.id]);
++  walk(c.root, c, options.placement ?? [s, 0, 0, s, (W - w * s) / 2, (H - h * s) / 2], [], [c.id]);
+   if (options.label)
+     content += `<text x="20" y="${H - 16}" font-size="10" fill="${dark ? '#adc1d4' : '#5d7286'}" font-family="sans-serif">${options.glass === false ? '几何视图' : glassCount ? 'Liquid Glass · Web' : '静态状态'}</text>`;
+   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${G.esc(G.clean(c.name))}" data-glass-count="${glassCount}"><defs>${defs}</defs>${content}</svg>`;
+--- a/src/rendering/geometry.js
++++ b/src/rendering/geometry.js
+@@ -281,6 +281,8 @@
+       find(root);
+       if (hit) {
+         const { n, x, y } = hit;
++        if (options.renderIllustration)
++          lines += `<rect x="${X + x * s}" y="${Y + y * s}" width="${n.f[2] * s}" height="${n.f[3] * s}" fill="#007aff0b" stroke="#007aff" stroke-width="1.5"/>`;
+         lines += measureX(
+           X + x * s,
+           X + (x + n.f[2]) * s,
+@@ -290,7 +292,10 @@
+         );
+       }
+     }
+-    return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="组件尺寸标注：宽 ${fmt(w)}，高 ${fmt(h)}，单位 pt"><g transform="translate(${X} ${Y}) scale(${s})">${node(root, c.platform, { selected: options.selected, boxes: options.boxes }, 0, new Set([c.id]))}</g>${lines}</svg>`;
++    const illustration = options.renderIllustration
++      ? options.renderIllustration({ width, height, placement: [s, 0, 0, s, X, Y] })
++      : `<g transform="translate(${X} ${Y}) scale(${s})">${node(root, c.platform, { selected: options.selected, boxes: options.boxes }, 0, new Set([c.id]))}</g>`;
++    return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="组件尺寸标注：宽 ${fmt(w)}，高 ${fmt(h)}，单位 pt">${illustration}${lines}</svg>`;
+   }
+   function flatten(n, depth = 0) {
+     return [{ node: n, depth }, ...(n.children || []).flatMap((c) => flatten(c, depth + 1))];
+--- a/src/pages/ComponentPage.vue
++++ b/src/pages/ComponentPage.vue
+@@ -15,6 +15,7 @@
+ import { exportComponent } from '../specs/exports';
+ import { resolve } from '../specs/materials.js';
+ import G from '../rendering/geometry.js';
++import { renderScene, type Matrix } from '../rendering/scene';
+ import LivePreview from '../components/LivePreview.vue';
+ import MaterialPanel from '../components/MaterialPanel.vue';
+ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ block: 'start' });
+@@ -58,6 +59,8 @@
+           boxes: false,
+           selected: selectedLayer.value,
+           appearance: current.value.facets.appearance,
++          renderIllustration: (viewport: { width: number; height: number; placement: Matrix }) =>
++            renderScene(current.value!, { ...viewport, background: 'plain' }),
+         },
+         720,
+         300,
+--- a/docs/rendering.md
++++ b/docs/rendering.md
+@@ -51,3 +51,16 @@
+ ## Tests
+ 
+ Unit tests render all 6,536 saved definitions structurally and verify finite output and immutable source snapshots. Browser tests compare pixels with displacement enabled and disabled while holding blur constant; the zero-blur switch verifies that the effect is real refraction, not merely frosting. These checks are not a pixel-parity comparison against UIKit or AppKit.
++
++## One visual rendering path
++
++The catalogue, main preview and annotated dimensions all use `renderScene`.
++Dimension labels use the source frame; a supplied placement matrix aligns the
++scene underneath those labels. A pressed switch can extend outside its track
++frame, as saved in the design file. This must not be resized to hide a rendering
++defect or replaced with an invented opaque thumb.
++
++The old geometry-only illustration rendered `Knob Shadow` as its unblurred
++border and omitted the transparent lens. Using that illustration for a material
++preview produced several hard, offset outlines. The annotated view now shares
++the full compositor rather than quietly reintroducing this bug.
+--- a/tests/frontend.test.mjs
++++ b/tests/frontend.test.mjs
+@@ -141,3 +141,31 @@
+   assert.equal(JSON.stringify(db), before);
+   assert.equal(JSON.stringify(data), mat);
+ });
++
++test('dimension diagrams share the material scene rather than drawing hard shadow borders', () => {
++  let viewport;
++  const diagram = G.diagram(pressed, {
++    dimensions: true,
++    padding: true,
++    renderIllustration: (v) => {
++      viewport = v;
++      return renderScene(pressed, { ...v, background: 'plain' });
++    },
++  }, 720, 300);
++  assert.deepEqual(viewport.placement.slice(0, 4), [3.3, 0, 0, 3.3]);
++  assert.match(diagram, /data-glass-count="1"/);
++  assert.match(diagram, /feDisplacementMap/);
++  assert.match(diagram, /stdDeviation="1.5"/);
++  assert.match(diagram, /64 pt/);
++  assert.match(diagram, /单位 pt/);
++  assert.doesNotMatch(diagram, /NaN|undefined|Infinity/);
++});
++
++test('pressed switch soft shadow and glass remain present at thumbnail scale', () => {
++  const svg = renderScene(pressed, { width: 300, height: 160, maxScale: 1.35, background: 'plain' });
++  assert.match(svg, /data-glass-count="1"/);
++  assert.match(svg, /stdDeviation="1.5"/);
++  assert.match(svg, /feDisplacementMap/);
++  // No fabricated opaque fill: the lens retains the source zero-blur recipe.
++  assert.equal(store.glassRecords(pressed)[0].recipe.blurs[0].radius, 0);
++});
+--- a/tests/browser.py
++++ b/tests/browser.py
+@@ -66,6 +66,12 @@
+     p.locator('.under-preview button').click();p.wait_for_timeout(180)
+     ok('pressed state is directly selectable',lenses()=='1' and 'Pressed' in p.locator('.under-preview').inner_text())
+     ok('source optics are visible',p.locator('.optics-grid').first.inner_text().find('0.075')>=0)
++    ok('dimension illustration has the same lens as the main preview',p.locator('.anatomy [data-glass-layer]').count()==1)
++    ok('dimension illustration keeps the shadow blur',p.locator('.anatomy feGaussianBlur[stdDeviation="1.5"]').count()>0)
++    p.locator('.anatomy').screenshot(path=str(out/'switch-dimensions.png'))
++    p.get_by_label('预览背景',exact=True).select_option('plain');p.wait_for_timeout(150)
++    p.locator('.preview-shell:not(.compact)').screenshot(path=str(out/'switch-pressed-plain.png'))
++    ok('zero-blur lens still samples the actual switch track',lenses()=='1' and p.locator('.preview-canvas feDisplacementMap').count()==1)
+     p.get_by_label('预览背景',exact=True).select_option('grid')
+     # Displacement-only pixel regression: same blur, tint and shadows, zero just the refraction scale.
+     p.wait_for_timeout(150)
