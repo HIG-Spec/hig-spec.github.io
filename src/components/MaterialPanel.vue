@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import type { Definition } from '../data/types';
 import { resolve } from '../specs/materials.js';
-import { glassVariants, statePartner, clean } from '../data/store';
+import { glassVariants, statePartner, interactionVariants, clean } from '../data/store';
 import { download } from '../specs/exports';
 import RecipePanel from './RecipePanel.vue';
 const props = defineProps<{ component: Definition }>();
@@ -22,6 +22,8 @@ const rows = computed(() =>
 );
 const record = computed(() => rows.value[index.value] ?? rows.value[0]);
 const related = computed(() => {
+  const available = interactionVariants(props.component).filter((c) => c.id !== props.component.id);
+  if (available.length) return available;
   const p = statePartner(props.component, true);
   return p && p.id !== props.component.id
     ? [p]
@@ -54,7 +56,7 @@ watch(
       <p>玻璃效果位于交互态或子部件。</p>
       <div class="inline-links">
         <button v-for="c in related" :key="c.id" class="button quiet" @click="emit('select', c)">
-          {{ clean(c.name).split('/').slice(-2).join(' / ') }} ↗
+          {{ c.previewLabel ?? clean(c.name).split('/').slice(-2).join(' / ') }} ↗
         </button>
       </div>
     </div>
@@ -109,7 +111,7 @@ watch(
       <p v-if="related.length">此组件的玻璃效果位于以下交互状态或子部件。</p>
       <div class="inline-links">
         <button v-for="c in related" :key="c.id" class="button quiet" @click="emit('select', c)">
-          {{ clean(c.name).split('/').slice(-2).join(' / ') }} ↗
+          {{ c.previewLabel ?? clean(c.name).split('/').slice(-2).join(' / ') }} ↗
         </button>
       </div>
     </div>

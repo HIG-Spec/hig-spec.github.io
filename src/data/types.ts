@@ -17,6 +17,10 @@ export interface Layer {
   [key: string]: any;
 }
 export interface Definition {
+  previewOf?: string;
+  previewKey?: string;
+  previewLabel?: string;
+  substitutions?: { instances: string[]; from: string; to: string }[];
   id: string;
   name: string;
   platform: Platform;

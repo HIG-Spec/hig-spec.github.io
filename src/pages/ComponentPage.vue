@@ -8,6 +8,7 @@ import {
   clean,
   platformName,
   statePartner,
+  interactionVariants,
 } from '../data/store';
 import { route, updateQuery, go } from '../data/router';
 import type { Definition, Platform } from '../data/types';
@@ -26,9 +27,14 @@ const base = computed(
     defaultDefinition(familyID.value, (route.value.query.get('platform') ?? 'ios') as Platform),
 );
 const transient = ref<Definition | null>(null);
-const current = computed(() => transient.value ?? base.value);
+const interactions = computed(() => (base.value ? interactionVariants(base.value) : []));
+const selectedPreview = computed(() =>
+  interactions.value.find((c) => c.previewKey === route.value.query.get('interaction')),
+);
+const current = computed(() => transient.value ?? selectedPreview.value ?? base.value);
 const selectedLayer = ref(''),
   internal = ref(false),
+  glassOnly = ref(false),
   filter = ref(''),
   page = ref(0),
   tab = ref(route.value.query.get('tab') ?? 'specs');
@@ -40,6 +46,7 @@ const candidates = computed(() =>
   all.value.filter(
     (c) =>
       (internal.value || !c.internal) &&
+      (!glassOnly.value || activeGlass(c)) &&
       clean(c.name).toLowerCase().includes(filter.value.toLowerCase()),
   ),
 );
@@ -69,7 +76,10 @@ const geometry = computed(() =>
 );
 const paired = computed(() =>
   current.value
-    ? statePartner(current.value, !/Pressed|Clicked/.test(current.value.name))
+    ? statePartner(
+        current.value,
+        !current.value.previewOf && !/Pressed|Clicked|Touch/.test(current.value.name),
+      )
     : undefined,
 );
 const activeGlass = (c: Definition) =>
@@ -81,7 +91,7 @@ function select(c: Definition) {
   transient.value = null;
   selectedLayer.value = '';
   if (c.family !== familyID.value) go('/components/' + c.family, { v: c.id });
-  else updateQuery({ v: c.id });
+  else updateQuery({ v: c.previewOf ?? c.id, interaction: c.previewKey ?? '' });
 }
 function setPlatform(p: Platform) {
   const c = defaultDefinition(current.value?.family ?? familyID.value, p);
@@ -100,7 +110,7 @@ watch(familyID, () => {
   tab.value = 'specs';
   internal.value = false;
 });
-watch(filter, () => (page.value = 0));
+watch([filter, glassOnly, internal], () => (page.value = 0));
 watch(current, (c) => {
   if (c) document.title = `${family.value?.zh ?? clean(c.name)} — HIG Spec`;
 });
@@ -154,7 +164,26 @@ watch(current, (c) => {
         class="text-button"
         @click="select(paired)"
       >
-        {{ /Pressed|Clicked/.test(current.name) ? '查看静止态' : '查看按压态与玻璃参数' }} ↗
+        {{
+          current.previewOf || /Pressed|Clicked|Touch/.test(current.name)
+            ? '查看静止态'
+            : '查看按压态与玻璃参数'
+        }}
+        ↗
+      </button>
+    </div>
+    <div v-if="interactions.length" class="interaction-states" aria-label="交互状态">
+      <button class="button quiet" :class="{ selected: !selectedPreview }" @click="select(base!)">
+        静止态
+      </button>
+      <button
+        v-for="c in interactions"
+        :key="c.id"
+        class="button quiet"
+        :class="{ selected: c.id === current.id }"
+        @click="select(c)"
+      >
+        {{ c.previewLabel ?? clean(c.name).split('/').slice(-2).join(' / ') }}
       </button>
     </div>
     <nav class="tabbar" aria-label="组件页面">
@@ -284,6 +313,7 @@ watch(current, (c) => {
     <section v-else-if="tab === 'variants'" class="spec-section">
       <div class="section-heading">
         <h2>变体对照</h2>
+        <label class="checkbox small"><input type="checkbox" v-model="glassOnly" />仅含玻璃</label>
         <input
           type="search"
           v-model="filter"

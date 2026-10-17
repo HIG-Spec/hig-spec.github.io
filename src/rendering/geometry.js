@@ -301,6 +301,7 @@ const G = (() => {
     return [{ node: n, depth }, ...(n.children || []).flatMap((c) => flatten(c, depth + 1))];
   }
   return {
+    path,
     esc,
     clean,
     fmt,

@@ -66,8 +66,8 @@ test('all material and support bindings have real nodes, effect recipes and plat
       if (si !== null) assert.equal(data.styles[si].platform, c.platform);
       n++;
     }
-  assert.equal(n, 1933);
-  assert.equal(Object.keys(data.bindings).length, 1342);
+  assert.equal(n, 2043);
+  assert.equal(Object.keys(data.bindings).length, 1398);
 });
 test('all definitions resolve without mutating either geometry or material payloads', () => {
   const before = JSON.stringify(db),
