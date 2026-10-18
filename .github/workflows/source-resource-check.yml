@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 4
     steps:
       - run: python -m pip install playwright
-      - name: Inspect public resource downloads
+      - name: Inspect publicly available version metadata
         run: |
           python -u - <<'PY'
           import json, shutil
@@ -20,16 +20,23 @@ jobs:
               b=p.chromium.launch(executable_path=shutil.which('google-chrome'),args=['--no-sandbox'])
               page=b.new_page()
               def capture(r):
-                  if 'graphql' in r.url:
-                      try:
-                          text=r.text()
-                          print('GRAPHQL',r.request.post_data[:500] if r.request.post_data else '',text[:12000])
-                      except:pass
+                  if 'graphql' not in r.url:return
+                  try:
+                      req=json.loads(r.request.post_data or '{}')
+                      if 'Version' in req.get('operationName',''):
+                          data=r.json()
+                          def clean(v):
+                              if isinstance(v,dict):return {k:clean(x) for k,x in v.items() if k not in ['url','url2x','path','downloadUrl','manifestUrl','imageToken','token','avatar','thumbnails']}
+                              if isinstance(v,list):return [clean(x) for x in v]
+                              return v
+                          print('QUERY',r.url,json.dumps(req))
+                          print('VERSIONS',json.dumps(clean(data)))
+                  except Exception as e:print(type(e).__name__)
               page.on('response',capture)
-              for key in ['04c24d8b-38fb-4afb-8836-36617e022f02','57153a31-3379-4737-8ac6-dbfd6525f052']:
-                  page.goto('https://www.sketch.com/s/'+key,wait_until='domcontentloaded')
-                  page.wait_for_timeout(8000)
-                  print('BODY',page.locator('body').inner_text()[:4000])
-                  print('LINKS',page.locator('a').evaluate_all('(es)=>es.map(e=>[e.textContent,e.href]).filter(v=>/download|sketch|zip/i.test(v.join()))'))
+              page.goto('https://www.sketch.com/s/57153a31-3379-4737-8ac6-dbfd6525f052',wait_until='domcontentloaded')
+              page.wait_for_timeout(4000)
+              page.get_by_text('Versions',exact=True).click()
+              page.wait_for_timeout(4000)
+              print('BODY',page.locator('body').inner_text()[:6000])
               b.close()
           PY
