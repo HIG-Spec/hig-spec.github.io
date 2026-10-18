@@ -1,3 +1,4 @@
+import { fontWeight } from './text-layout.js';
 import names from './symbol-names.json' with { type: 'json' };
 /* Independent semantic SVG illustrations, NOT Apple font outlines.
  * Codepoint/name metadata: symbolist (MIT); see symbolist-LICENSE.txt.
@@ -263,7 +264,7 @@ const SymbolPreview = (() => {
       size = Number(t.size) || 13,
       lh = Number(t.lineHeight) || size * 1.2,
       align = t.alignment || 0;
-    const weight = /bold|semibold|medium/i.test(t.font || '') ? 600 : 400;
+    const weight = fontWeight(t.font);
     const color = t.color
       ? `rgba(${t.color
           .slice(0, 3)
@@ -277,7 +278,13 @@ const SymbolPreview = (() => {
           Array.isArray(b) && b.length === 4 && b.every(Number.isFinite) && b[2] > 0 && b[3] > 0;
       const gw = valid ? b[2] : Math.min(w, size),
         gh = valid ? b[3] : Math.min(h, size);
-      const x = valid ? b[0] : align === 2 ? (w - gw) / 2 : align === 1 ? w - gw : 0;
+      const x = valid
+        ? b[0] + (w - (t.previewOriginalWidth ?? w)) * (align === 2 ? 0.5 : align === 1 ? 1 : 0)
+        : align === 2
+          ? (w - gw) / 2
+          : align === 1
+            ? w - gw
+            : 0;
       const y = valid ? (h - lh) / 2 + b[1] : (h - gh) / 2;
       return symbol(chars[0], x, y, gw, gh, color, weight === 600 ? 2.1 : 1.7);
     }
@@ -301,7 +308,8 @@ const SymbolPreview = (() => {
           token.char ? size : measure(token.text, size, weight),
         ),
         total = advances.reduce((a, b) => a + b, 0);
-      const fit = total > w && total > 0 ? w / total : 1;
+      // Overflow is clipped; glyphs must never be horizontally squeezed to fit.
+      const fit = 1;
       let x = align === 2 ? (w - total * fit) / 2 : align === 1 ? w - total * fit : 0;
       result += `<g transform="translate(${x} 0) scale(${fit} 1)">`;
       x = 0;
@@ -346,7 +354,12 @@ const SymbolPreview = (() => {
       for (const o of active.filter((o) => o.parts.length === 1 && o.parts[0] === node.id)) {
         copy();
         if (o.prop === 'stringValue' && node.text) {
-          out.text = { ...node.text, value: String(o.value ?? '') };
+          out.text = {
+            ...node.text,
+            value: String(o.value ?? ''),
+            previewOriginalValue: node.text.previewOriginalValue ?? node.text.value,
+          };
+          if (out.text.value === node.text.value) continue;
           delete out.text.glyphBounds;
         } else if (o.prop === 'symbolID') out.symbolID = o.value;
         else if (o.prop === 'isVisible')

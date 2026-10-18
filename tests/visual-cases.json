@@ -1,0 +1,680 @@
+[
+  {
+    "id": "ios:972ED7BD-49AA-45B9-975C-3DAB89135023",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Dark/iPad (Regular)/iPad"
+  },
+  {
+    "id": "ios:543F4F13-725B-4D73-80A8-9EAB27D8256D",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Light/iPad (Regular)/iPad"
+  },
+  {
+    "id": "ios:D3678C76-BAFC-48D7-810A-35003B7853DF",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Dark/iPhone/Search Selected - Typing"
+  },
+  {
+    "id": "ios:9090E7CA-CA59-4D98-9CAB-CC4632DF1A1F",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Light/iPhone/Search Selected - Typing"
+  },
+  {
+    "id": "ios:34849D5B-0A58-4116-908A-D19874122C02",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Dark/iPhone/Search Selected - Value"
+  },
+  {
+    "id": "ios:C7E3FAF6-B18D-4CE5-AD48-F9D319EB2422",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Light/iPhone/Search Selected - Value"
+  },
+  {
+    "id": "ios:C46C53EC-096C-448D-94FC-AB949829C87E",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Dark/iPhone/Search Selected - Placeholder"
+  },
+  {
+    "id": "ios:217C62D0-FD95-44EF-B6C7-2CCE743F3D25",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Light/iPhone/Search Selected - Placeholder"
+  },
+  {
+    "id": "ios:9C591A38-4C5E-49CB-A48B-57AC1A280201",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Dark/iPhone/Prominent Tab"
+  },
+  {
+    "id": "ios:EA9EAA84-832A-45CF-A98C-94CF88E78097",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Dark/iPhone/Default"
+  },
+  {
+    "id": "ios:83E6CD39-D8D5-4833-9E33-2AC84A4A1232",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Light/iPhone/Prominent Tab"
+  },
+  {
+    "id": "ios:9D65D820-397C-4F6E-9A6E-D2689B0B7BD9",
+    "family": "tab-bars",
+    "platform": "ios",
+    "name": "Tab Bars/Light/iPhone/Default"
+  },
+  {
+    "id": "macos:26CCF802-2D00-460F-A309-889BC71CE45B",
+    "family": "notifications",
+    "platform": "macos",
+    "name": "Notifications/Light/Single"
+  },
+  {
+    "id": "macos:96D8A187-9A9F-46B2-9864-174DB98E16FD",
+    "family": "notifications",
+    "platform": "macos",
+    "name": "Notifications/Dark/Single"
+  },
+  {
+    "id": "macos:05AB17C7-7C7C-4589-AD11-C1F852A7AF63",
+    "family": "notifications",
+    "platform": "macos",
+    "name": "Notifications/Light/Stacked"
+  },
+  {
+    "id": "macos:36AD7BCA-5579-497A-8E40-E4768D5CEB7E",
+    "family": "notifications",
+    "platform": "macos",
+    "name": "Notifications/Dark/Stacked"
+  },
+  {
+    "id": "macos:72178ED0-B3F4-4904-82EF-AE039E49E4B3",
+    "family": "notifications",
+    "platform": "macos",
+    "name": "Notifications/Examples/Light"
+  },
+  {
+    "id": "macos:F8890626-00BB-4190-9990-C502477BF733",
+    "family": "notifications",
+    "platform": "macos",
+    "name": "Notifications/Examples/Dark"
+  },
+  {
+    "id": "ios:90296046-6FC0-4B5E-A425-760936EAC9A3",
+    "family": "buttons",
+    "platform": "ios",
+    "name": "Buttons/Light/Large/Glass/Default"
+  },
+  {
+    "id": "ios:885BBBF5-E81D-416C-B1CC-53A241A2D891",
+    "family": "buttons",
+    "platform": "ios",
+    "name": "Buttons/Dark/Large/Glass/Default"
+  },
+  {
+    "id": "macos:F6A5DA30-3881-42B2-BD76-25BF4E305D65",
+    "family": "buttons",
+    "platform": "macos",
+    "name": "Buttons/Light/Content Area/Toggle/3 Rg/Active, On, 1 Idle"
+  },
+  {
+    "id": "macos:7B129469-C4E7-423C-AB67-93EC7E29BFAC",
+    "family": "buttons",
+    "platform": "macos",
+    "name": "Buttons/Dark/Content Area/Toggle/3 Rg/Active, On, 1 Idle"
+  },
+  {
+    "id": "ios:C9E2DB96-FF45-4D0A-B39D-0BD026C86DD0",
+    "family": "switches",
+    "platform": "ios",
+    "name": "Toggles/Light/On/1 - Idle"
+  },
+  {
+    "id": "ios:62E7D23B-9EC8-4756-A73C-9CD7A38FA06D",
+    "family": "switches",
+    "platform": "ios",
+    "name": "Toggles/Dark/On/1 - Idle"
+  },
+  {
+    "id": "macos:240B03A0-3443-4696-88F3-26351C81B387",
+    "family": "switches",
+    "platform": "macos",
+    "name": "Toggles - Switches/Light/Content Area/3 Rg/Active, Off, 1 - Idle"
+  },
+  {
+    "id": "macos:48D5525F-0CD8-48F0-821A-64FED9A77FE0",
+    "family": "switches",
+    "platform": "macos",
+    "name": "Toggles - Switches/Dark/Content Area/3 Rg/Active, Off, 1 - Idle"
+  },
+  {
+    "id": "ios:9EF74A32-E9D6-47FE-B85E-CA1A8A30AA6F",
+    "family": "segmented-controls",
+    "platform": "ios",
+    "name": "Segmented Controls/Light/Large/1 - Enabled"
+  },
+  {
+    "id": "ios:FE073914-A7E7-4E4E-9F4D-374AE7330AA9",
+    "family": "segmented-controls",
+    "platform": "ios",
+    "name": "Segmented Controls/Dark/Large/1 - Enabled"
+  },
+  {
+    "id": "macos:B0E16EDA-5F37-4F90-9154-578C9696D462",
+    "family": "segmented-controls",
+    "platform": "macos",
+    "name": "Segmented Controls/Light/Content Area/Duo/Active, 3 Rg"
+  },
+  {
+    "id": "macos:42577747-9DF5-47AA-BD4B-48DEC8D76EAA",
+    "family": "segmented-controls",
+    "platform": "macos",
+    "name": "Segmented Controls/Dark/Content Area/Duo/Active, 3 Rg"
+  },
+  {
+    "id": "ios:BE135A49-11F2-417A-9C13-C3A69ACC22E5",
+    "family": "date-time-pickers",
+    "platform": "ios",
+    "name": "Date and Time Pickers/Compact Picker/Light/Date and Time"
+  },
+  {
+    "id": "ios:11B2FC62-782B-4E59-834D-EE619B73845C",
+    "family": "date-time-pickers",
+    "platform": "ios",
+    "name": "Date and Time Pickers/Compact Picker/Dark/Date and Time"
+  },
+  {
+    "id": "ios:CA69D50A-DD80-471C-8C95-5C85882D9DC0",
+    "family": "text-fields",
+    "platform": "ios",
+    "name": "Text Fields/Light/Default"
+  },
+  {
+    "id": "ios:0E16AC9A-9616-4387-82FC-A66F93E8371F",
+    "family": "text-fields",
+    "platform": "ios",
+    "name": "Text Fields/Dark/Default"
+  },
+  {
+    "id": "macos:DE62B998-3D2F-4AF8-8D49-B1EE75A5D4F2",
+    "family": "text-fields",
+    "platform": "macos",
+    "name": "Text Fields/Light/3 Rg/Value + Typing"
+  },
+  {
+    "id": "macos:4CC28ADD-2857-483F-9A7C-4CC040929467",
+    "family": "text-fields",
+    "platform": "macos",
+    "name": "Text Fields/Dark/3 Rg/Value + Typing"
+  },
+  {
+    "id": "ios:B6919373-2955-46B6-B842-8E9A509FA6A9",
+    "family": "sliders",
+    "platform": "ios",
+    "name": "Sliders/Light/Glyphs/Mid - 1 - Enabled"
+  },
+  {
+    "id": "ios:D3492E1C-E1DC-47BE-B5DA-985AAC3D79AC",
+    "family": "sliders",
+    "platform": "ios",
+    "name": "Sliders/Dark/Glyphs/Mid - 1 - Enabled"
+  },
+  {
+    "id": "macos:72808B05-F0A6-4A30-870C-34DF3A6F28E6",
+    "family": "sliders",
+    "platform": "macos",
+    "name": "Sliders/Light/Content Area/Standard/Active, 1 - Idle/3 Rg"
+  },
+  {
+    "id": "macos:AD9E5DAE-5E96-4755-874E-A566D9507E64",
+    "family": "sliders",
+    "platform": "macos",
+    "name": "Sliders/Dark/Content Area/Standard/Active, 1 - Idle/3 Rg"
+  },
+  {
+    "id": "ios:32543876-D3E3-4B65-B369-DDA2592B6C5A",
+    "family": "steppers",
+    "platform": "ios",
+    "name": "Stepper/Light"
+  },
+  {
+    "id": "ios:57899DE7-73C4-48D9-8591-9059EF686D4E",
+    "family": "steppers",
+    "platform": "ios",
+    "name": "Stepper/Dark"
+  },
+  {
+    "id": "macos:A5641F13-6B04-456A-A898-5A2277671CFE",
+    "family": "steppers",
+    "platform": "macos",
+    "name": "Steppers/Light/Content Area/Inside Field/3 Rg"
+  },
+  {
+    "id": "macos:4B6A31CA-77EE-4EA3-88AA-80FBA60AA391",
+    "family": "steppers",
+    "platform": "macos",
+    "name": "Steppers/Dark/Content Area/Inside Field/3 Rg"
+  },
+  {
+    "id": "macos:4FA5CEE7-030F-4F90-9C66-61BB68839952",
+    "family": "checkboxes",
+    "platform": "macos",
+    "name": "Toggles - Checkboxes/Light/Content Area/3 Rg/Active, Unchecked, 1 - Idle"
+  },
+  {
+    "id": "macos:8D0A1AD5-2964-45FE-BB12-8842E98360E7",
+    "family": "checkboxes",
+    "platform": "macos",
+    "name": "Toggles - Checkboxes/Dark/Content Area/3 Rg/Active, Unchecked, 1 - Idle"
+  },
+  {
+    "id": "macos:BB44065C-C25A-4278-8C6F-E9AE63AAD2C9",
+    "family": "radio-buttons",
+    "platform": "macos",
+    "name": "Toggles - Radio Buttons/Light/Content Area/3 Rg/Active, Unchecked - 1 - Idle"
+  },
+  {
+    "id": "macos:8C3A7217-BEAA-4EE7-AEC3-29A7B4EF40E1",
+    "family": "radio-buttons",
+    "platform": "macos",
+    "name": "Toggles - Radio Buttons/Dark/Content Area/3 Rg/Active, Unchecked - 1 - Idle"
+  },
+  {
+    "id": "macos:A64FC45F-0214-49DD-A997-E451AC6F76FB",
+    "family": "search-fields",
+    "platform": "macos",
+    "name": "Search Fields/Light/3 Rg/Value + Typing"
+  },
+  {
+    "id": "macos:E6174EAD-193D-4C5B-A0F8-94721A389065",
+    "family": "search-fields",
+    "platform": "macos",
+    "name": "Search Fields/Dark/3 Rg/Value + Typing"
+  },
+  {
+    "id": "macos:3FDBCF54-5385-4F2D-B3AD-2CA09E6E87B7",
+    "family": "combo-boxes",
+    "platform": "macos",
+    "name": "Combo Boxes/Light/3 Rg/1 - Idle"
+  },
+  {
+    "id": "macos:879A75F1-7ACC-4EA6-9807-0ACEC3A97FFB",
+    "family": "combo-boxes",
+    "platform": "macos",
+    "name": "Combo Boxes/Dark/3 Rg/1 - Idle"
+  },
+  {
+    "id": "macos:495255CD-BE79-4A5B-8ED3-8E81F9A47520",
+    "family": "popup-buttons",
+    "platform": "macos",
+    "name": "Pulldown Buttons/Light/Content Area/3 Rg/1 - Idle"
+  },
+  {
+    "id": "macos:D94EF81E-AC75-432F-9CD0-4E1814A49502",
+    "family": "popup-buttons",
+    "platform": "macos",
+    "name": "Pulldown Buttons/Dark/Content Area/3 Rg/1 - Idle"
+  },
+  {
+    "id": "ios:8DD13BBC-A6BF-40EE-A073-6CF0DDC64C3F",
+    "family": "menus",
+    "platform": "ios",
+    "name": "Menus/Light/iPhone"
+  },
+  {
+    "id": "ios:BCE17771-C537-4171-8FBA-96069F235BE1",
+    "family": "menus",
+    "platform": "ios",
+    "name": "Menus/Dark/iPhone"
+  },
+  {
+    "id": "macos:2406BC5E-075A-4C78-867C-A012F25363EA",
+    "family": "menus",
+    "platform": "macos",
+    "name": "Menus/Light/Examples/Regular"
+  },
+  {
+    "id": "macos:F221DA41-1F53-4BA9-BB59-E0F8ABBC3230",
+    "family": "menus",
+    "platform": "macos",
+    "name": "Menus/Dark/Examples/Regular"
+  },
+  {
+    "id": "ios:4B58BD9F-6422-4A76-B083-A2177A1C22BD",
+    "family": "sidebars",
+    "platform": "ios",
+    "name": "Sidebar/Light/Items/Level 0"
+  },
+  {
+    "id": "ios:82E557DB-0E7B-4031-96DD-6F7304472D78",
+    "family": "sidebars",
+    "platform": "ios",
+    "name": "Sidebar/Dark/Items/Level 0"
+  },
+  {
+    "id": "macos:2CDB4B89-8532-4846-8797-9FFDBB6EF86D",
+    "family": "sidebars",
+    "platform": "macos",
+    "name": "Sidebars/Light/Examples/Active/Medium"
+  },
+  {
+    "id": "macos:3174265D-F9BA-4BA2-83FA-EAB75967144B",
+    "family": "sidebars",
+    "platform": "macos",
+    "name": "Sidebars/Dark/Examples/Active/Medium"
+  },
+  {
+    "id": "ios:50E31F7A-5C7C-4D9B-870E-FCB141048A44",
+    "family": "toolbars",
+    "platform": "ios",
+    "name": "Toolbars/Light/iPhone/Top - Standard/Title"
+  },
+  {
+    "id": "ios:E2133E73-7476-45C9-ACF4-5C5C306CFE81",
+    "family": "toolbars",
+    "platform": "ios",
+    "name": "Toolbars/Dark/iPhone/Top - Standard/Title"
+  },
+  {
+    "id": "macos:54F6DC16-113D-450D-9BD5-E14A4F3E542E",
+    "family": "toolbars",
+    "platform": "macos",
+    "name": "Titlebars and Toolbars/Light/XL/Buttons/Active/3"
+  },
+  {
+    "id": "macos:141FC9AD-D418-4962-81D1-A4BDF1780009",
+    "family": "toolbars",
+    "platform": "macos",
+    "name": "Titlebars and Toolbars/Dark/XL/Buttons/Active/3"
+  },
+  {
+    "id": "ios:A0DACFB7-D57F-400F-9C19-C1D1D9DEB56E",
+    "family": "page-controls",
+    "platform": "ios",
+    "name": "Page Control/Light/Background/8+ Dots, Last Selected"
+  },
+  {
+    "id": "ios:6A72DF8F-B848-4898-8F0A-636C17335925",
+    "family": "page-controls",
+    "platform": "ios",
+    "name": "Page Control/Dark/Background/8+ Dots, Last Selected"
+  },
+  {
+    "id": "macos:17E49B47-1B17-4EA8-9FA9-F08E4618FB6E",
+    "family": "disclosure-controls",
+    "platform": "macos",
+    "name": "Disclosure Buttons/Light/Content Area/3 Rg/Up, 1 - Idle"
+  },
+  {
+    "id": "macos:BF8704FA-82C3-47B5-927A-858A2CF732B4",
+    "family": "disclosure-controls",
+    "platform": "macos",
+    "name": "Disclosure Buttons/Dark/Content Area/3 Rg/Up, 1 - Idle"
+  },
+  {
+    "id": "macos:9378D459-C744-4992-BEE2-66D483EF530A",
+    "family": "scrollbars",
+    "platform": "macos",
+    "name": "Scrollbars/Light//Vertical"
+  },
+  {
+    "id": "macos:753F261C-6924-44F3-9D54-7FEC24F73965",
+    "family": "scrollbars",
+    "platform": "macos",
+    "name": "Scrollbars/Dark//Vertical"
+  },
+  {
+    "id": "ios:E0D5B734-FA3E-495D-AA69-E8AE1BA44815",
+    "family": "lists",
+    "platform": "ios",
+    "name": "Lists/Light/Grouped Table View"
+  },
+  {
+    "id": "ios:B99330F6-E733-4416-8F32-5024AF71534E",
+    "family": "lists",
+    "platform": "ios",
+    "name": "Lists/Dark/Grouped Table View"
+  },
+  {
+    "id": "macos:4AE1E021-E925-4252-B06B-B177E62C1BBE",
+    "family": "forms",
+    "platform": "macos",
+    "name": "Forms/Example Forms/Light"
+  },
+  {
+    "id": "macos:195290DC-9BD4-4911-B536-EBAEE8A9E2BD",
+    "family": "forms",
+    "platform": "macos",
+    "name": "Forms/Example Forms/Dark"
+  },
+  {
+    "id": "ios:0EFA1982-BC98-4765-B33C-D36DA54BD0D5",
+    "family": "alerts",
+    "platform": "ios",
+    "name": "Alerts/Light/Default"
+  },
+  {
+    "id": "ios:2FA3E418-86DB-407E-A965-6C5894104AFE",
+    "family": "alerts",
+    "platform": "ios",
+    "name": "Alerts/Dark/Default"
+  },
+  {
+    "id": "macos:EBE46E1F-FD04-4CC0-B526-1759F0ADC3A4",
+    "family": "alerts",
+    "platform": "macos",
+    "name": "Alerts/Light/Side by Side"
+  },
+  {
+    "id": "macos:E8EE8E04-C768-4DCE-BBAE-DB070C8AFCAA",
+    "family": "alerts",
+    "platform": "macos",
+    "name": "Alerts/Dark/Side by Side"
+  },
+  {
+    "id": "ios:CABE2C74-7EC2-4664-A556-E7A268742764",
+    "family": "action-sheets",
+    "platform": "ios",
+    "name": "Action Sheets/Light"
+  },
+  {
+    "id": "ios:22CE2014-43DD-4BCC-9C61-6D141DA77EAD",
+    "family": "action-sheets",
+    "platform": "ios",
+    "name": "Action Sheets/Dark"
+  },
+  {
+    "id": "ios:BEB684A4-C93C-41F2-874E-965D8FD45E4F",
+    "family": "sheets",
+    "platform": "ios",
+    "name": "Sheets/Light/iPhone/Large Detent"
+  },
+  {
+    "id": "ios:B386190F-AD9A-4D91-968A-09431219C6C8",
+    "family": "sheets",
+    "platform": "ios",
+    "name": "Sheets/Dark/iPhone/Large Detent"
+  },
+  {
+    "id": "ios:09CA97C9-67D3-4B9E-A880-1DED4E7C9E89",
+    "family": "popovers",
+    "platform": "ios",
+    "name": "Popovers (iPad Only)/Light/Bottom Trailing"
+  },
+  {
+    "id": "ios:6016FD9A-9F3A-4E8C-98F5-63EB87E0C774",
+    "family": "popovers",
+    "platform": "ios",
+    "name": "Popovers (iPad Only)/Dark/Bottom Trailing"
+  },
+  {
+    "id": "macos:4BD80C45-7D5A-455B-92E8-6E0DD33A1AF2",
+    "family": "popovers",
+    "platform": "macos",
+    "name": "Popovers/Light/North-Center"
+  },
+  {
+    "id": "macos:E274F809-67BE-4219-AF54-76CBBCDC69B7",
+    "family": "popovers",
+    "platform": "macos",
+    "name": "Popovers/Dark/North-Center"
+  },
+  {
+    "id": "macos:2BA4DD98-4896-49D2-B86E-A93E4C2C6E8E",
+    "family": "dialogs",
+    "platform": "macos",
+    "name": "Dialogs/Save Dialog Light"
+  },
+  {
+    "id": "ios:83CB8B24-0536-42EF-9786-B6D877771C04",
+    "family": "windows",
+    "platform": "ios",
+    "name": "Windows/Light/Window Controls/Active"
+  },
+  {
+    "id": "ios:7B622112-AD83-4773-B86F-C5AE275A54F9",
+    "family": "windows",
+    "platform": "ios",
+    "name": "Windows/Dark/Window Controls/Active"
+  },
+  {
+    "id": "macos:843A325C-8E4F-404E-9FEE-E5E6DD44BFA5",
+    "family": "windows",
+    "platform": "macos",
+    "name": "Windows/Light/Default + Title + Sidebar/Active"
+  },
+  {
+    "id": "macos:CF246DE3-08F9-4516-9F1F-01216663D882",
+    "family": "windows",
+    "platform": "macos",
+    "name": "Windows/Dark/Default + Title + Sidebar/Active"
+  },
+  {
+    "id": "ios:2A5E9A96-9092-421A-9BC8-3E01878E711A",
+    "family": "progress-indicators",
+    "platform": "ios",
+    "name": "Progress Indicators/Light/Indeterminate Spinner - Large"
+  },
+  {
+    "id": "ios:1E4CF0EB-5C9A-4EE9-8A02-43C8EF81734C",
+    "family": "progress-indicators",
+    "platform": "ios",
+    "name": "Progress Indicators/Dark/Indeterminate Spinner - Large"
+  },
+  {
+    "id": "macos:8CA9FBF2-8BDE-4C0C-BB74-E27F3B8F25BB",
+    "family": "progress-indicators",
+    "platform": "macos",
+    "name": "Progress Indicators/Light/Content Area/Circular/Indeterminate/3 Rg/Active"
+  },
+  {
+    "id": "macos:BE322DD5-4154-46E6-B89A-3629ABB214B3",
+    "family": "progress-indicators",
+    "platform": "macos",
+    "name": "Progress Indicators/Dark/Content Area/Circular/Indeterminate/3 Rg/Active"
+  },
+  {
+    "id": "ios:BBB7BF2E-EA13-42E4-83BF-A90A579C1B1C",
+    "family": "color-wells",
+    "platform": "ios",
+    "name": "Color Pickers/Light/iPad"
+  },
+  {
+    "id": "ios:66B2FE1D-9F32-418E-BFAE-CEDCAA332793",
+    "family": "color-wells",
+    "platform": "ios",
+    "name": "Color Pickers/Dark/iPad"
+  },
+  {
+    "id": "macos:88D4DB11-D5F9-42AF-89E0-5773772BA7BF",
+    "family": "color-wells",
+    "platform": "macos",
+    "name": "Color Pickers/Light/Content Area/Standard/3 Rg/1 - Idle"
+  },
+  {
+    "id": "macos:72F6B4AE-7487-4600-8A7C-B476AC8CF7B2",
+    "family": "color-wells",
+    "platform": "macos",
+    "name": "Color Pickers/Dark/Content Area/Standard/3 Rg/1 - Idle"
+  },
+  {
+    "id": "macos:526F1447-2696-4019-9B18-41E47E2E0719",
+    "family": "tooltips",
+    "platform": "macos",
+    "name": "Tooltips/Light"
+  },
+  {
+    "id": "macos:38A988BA-6023-4511-B7A0-3EEB6EBE0913",
+    "family": "tooltips",
+    "platform": "macos",
+    "name": "Tooltips/Dark"
+  },
+  {
+    "id": "macos:00A88136-2217-4817-8240-FE08DBD89B8F",
+    "family": "group-boxes",
+    "platform": "macos",
+    "name": "Group Boxes/Light"
+  },
+  {
+    "id": "macos:85179E98-5BFB-4F90-8FB7-FD988B29BBD4",
+    "family": "group-boxes",
+    "platform": "macos",
+    "name": "Group Boxes/Dark"
+  },
+  {
+    "id": "macos:7D545EFC-56AF-4F2B-8B5D-4D3DB2362766",
+    "family": "image-wells",
+    "platform": "macos",
+    "name": "Image Wells/Light"
+  },
+  {
+    "id": "macos:E36AF48C-279C-4A2F-89D3-10F729ADD96D",
+    "family": "image-wells",
+    "platform": "macos",
+    "name": "Image Wells/Dark"
+  },
+  {
+    "id": "ios:8991DD34-5D2E-4FBD-B6C1-B36A3D0697F4",
+    "family": "activity-views",
+    "platform": "ios",
+    "name": "Activity View/Light/Card - Half Height"
+  },
+  {
+    "id": "ios:5126762C-6E97-4DD9-B823-EA3010D42F36",
+    "family": "activity-views",
+    "platform": "ios",
+    "name": "Activity View/Dark/Card - Half Height"
+  },
+  {
+    "id": "ios:DE3EB3A7-81F3-4C60-90E3-BDBDBF201EB0",
+    "family": "keyboards",
+    "platform": "ios",
+    "name": "Keyboard/Light/iPhone"
+  },
+  {
+    "id": "ios:8186ACD4-BF89-40A7-A2F9-FF2D8564F4E9",
+    "family": "keyboards",
+    "platform": "ios",
+    "name": "Keyboard/Dark/iPad/Lower Case"
+  },
+  {
+    "id": "macos:7864E08E-08D7-48F2-A7CB-F956B694C4CD",
+    "family": "arrow-buttons",
+    "platform": "macos",
+    "name": "Arrow Buttons/Light/Content Area/3 Rg/1 - Idle"
+  },
+  {
+    "id": "macos:344FBFA6-78A4-4AEA-9242-8CF4ED73B785",
+    "family": "arrow-buttons",
+    "platform": "macos",
+    "name": "Arrow Buttons/Dark/Content Area/3 Rg/1 - Idle"
+  }
+]

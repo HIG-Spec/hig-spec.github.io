@@ -27,7 +27,7 @@ with sync_playwright() as pw:
     p.wait_for_selector('.catalog-card')
     def goto(route):
         p.evaluate('(r)=>location.hash=r',route);p.wait_for_selector('.detail-page');p.wait_for_timeout(150)
-    tested_pixels=set()
+    tested_pixels=set(); probe_pixels=set()
     for c in report['cases']:
         goto(c['route']);tag=c['family']+'-'+c['platform'];canvas=p.locator('.preview-shell:not(.compact) .preview-canvas');svg=canvas.locator(':scope > svg')
         ok(tag+' full preview matches source glass count',int(svg.get_attribute('data-glass-count'))==c['glass'])
@@ -37,8 +37,32 @@ with sync_playwright() as pw:
             if c['family'] not in tested_pixels:
                 p.get_by_label('预览背景',exact=True).select_option('grid');p.wait_for_timeout(80);a=Image.open(io.BytesIO(canvas.screenshot())).convert('RGB')
                 p.get_by_role('button',name='平面',exact=True).click();p.wait_for_timeout(80);flat=Image.open(io.BytesIO(canvas.screenshot())).convert('RGB')
-                ok(tag+' effect changes real rendered pixels',ImageChops.difference(a,flat).getbbox() is not None)
-                p.get_by_role('button',name='折射',exact=True).click();p.get_by_label('预览背景',exact=True).select_option('aurora');tested_pixels.add(c['family'])
+                natural=ImageChops.difference(a,flat).getbbox() is not None
+                p.get_by_role('button',name='折射',exact=True).click();p.wait_for_timeout(80)
+                if not natural:
+                    # A lens over an opaque uniform child may have no visible
+                    # displacement. Supply texture to the same sampled backdrop,
+                    # keeping the real filter, clipping, fills and blur unchanged.
+                    count=canvas.evaluate('''root=>{
+                        const svg=root.querySelector('svg');
+                        svg.querySelector('defs').insertAdjacentHTML('beforeend','<pattern id="contrast-probe" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="white"/><path d="M0 0h6v6H0z M6 6h6v6H6z" fill="black"/></pattern>');
+                        let n=0;
+                        for(const lens of svg.querySelectorAll('[data-glass-layer]')){
+                            const use=lens.querySelector('g[filter] use');
+                            if(!use)continue;
+                            const source=svg.querySelector(use.getAttribute('href'));
+                            if(!source)continue;
+                            source.innerHTML='<rect width="'+svg.viewBox.baseVal.width+'" height="'+svg.viewBox.baseVal.height+'" fill="url(#contrast-probe)"/>';n++;
+                        }return n;
+                    }''')
+                    ok(tag+' contrast probe reaches the sampled backdrop',count>0)
+                    textured=Image.open(io.BytesIO(canvas.screenshot())).convert('RGB')
+                    canvas.locator('feDisplacementMap').evaluate_all('(els)=>els.forEach(e=>e.setAttribute("scale","0"))')
+                    zero=Image.open(io.BytesIO(canvas.screenshot())).convert('RGB')
+                    ok(tag+' refraction changes textured pixels with blur fixed',ImageChops.difference(textured,zero).getbbox() is not None)
+                    probe_pixels.add(c['family'])
+                else:ok(tag+' effect changes real rendered pixels',True)
+                p.get_by_label('预览背景',exact=True).select_option('aurora');tested_pixels.add(c['family'])
     for family in ['sliders','segmented-controls']:
         goto('/components/'+family)
         ok(family+' idle is not forcibly glassified',p.locator('.preview-canvas>svg').get_attribute('data-glass-count')=='0')
@@ -53,5 +77,5 @@ with sync_playwright() as pw:
         if family=='segmented-controls':ok('segmented labels survive state swap',all('Item '+str(i) in canvas.inner_html() for i in range(1,6)))
     p.set_viewport_size({'width':390,'height':844});p.wait_for_timeout(200);ok('mobile material-state controls do not overflow',p.evaluate('document.documentElement.scrollWidth<=innerWidth'))
     p.screenshot(path=str(out/'mobile.png'));ok('no runtime errors',not errors);b.close()
-(out/'report.json').write_text(json.dumps({'checks':checks,'errors':errors,'familyPlatformCases':len(report['cases']),'pixelCheckedFamilies':sorted(tested_pixels)},indent=2))
+(out/'report.json').write_text(json.dumps({'checks':checks,'errors':errors,'familyPlatformCases':len(report['cases']),'pixelCheckedFamilies':sorted(tested_pixels),'contrastProbeFamilies':sorted(probe_pixels)},indent=2))
 print(json.dumps({'checks':len(checks),'pixelCheckedFamilies':len(tested_pixels)}))

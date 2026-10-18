@@ -1,5 +1,8 @@
 // Dimension annotations and source geometry illustration.
 import SymbolPreview from './symbols.js';
+import { presentation, initPresentation } from './source-meta';
+import { resizeFrame } from './layout';
+import { fontWeight, textLines } from './text-layout.js';
 const G = (() => {
   const esc = (s) =>
     String(s ?? '').replace(
@@ -51,6 +54,7 @@ const G = (() => {
     refs = new Map(),
     serial = 0;
   function init(data) {
+    initPresentation(data);
     db = data;
     refs = new Map(data.components.map((c) => [c.platform + ':' + c.symbolID, c]));
   }
@@ -137,10 +141,10 @@ const G = (() => {
       if (ref && !chain.has(ref.id) && ref.root.f[2] && ref.root.f[3]) {
         const next = new Set(chain);
         next.add(ref.id);
-        let rn = SymbolPreview.applyOverrides(ref.root, n.overrides);
+        let rn = resizeFrame(SymbolPreview.applyOverrides(ref.root, n.overrides), w, h);
         // Only content/color illustrations use the referenced master. Geometry
         // labels and exports never use this affine expansion.
-        svg += `<g transform="scale(${w / rn.f[2]} ${h / rn.f[3]})">${node(rn, platform, { ...options, selected: null, boxes: false }, depth + 1, next)}</g>`;
+        svg += `<g transform="translate(0 0)">${node(rn, platform, { ...options, selected: null, boxes: false }, depth + 1, next)}</g>`;
       } else
         svg += `<rect width="${w}" height="${h}" rx="${Math.min(6, h / 2)}" fill="#7c9fc314" stroke="#91a3ba" stroke-width=".5" stroke-dasharray="3 2"/>`;
     } else {
@@ -154,17 +158,20 @@ const G = (() => {
         const t = n.text,
           size = t.size || 13,
           tc = t.color ? rgba(t.color) : '#222',
-          bold = /bold|semibold|medium/i.test(t.font || '') ? '600' : '400';
+          bold = fontWeight(t.font);
         const raw = t.value || '';
         if (/[\uE000-\uF8FF\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/u.test(raw)) {
           svg += SymbolPreview.renderText(t, w, h, uid);
         } else {
-          const lines = raw.split('\n').slice(0, 30),
-            lh = t.lineHeight || size * 1.2,
+          const lh = t.lineHeight || size * 1.2,
+            lines = textLines(t, w, h),
             align = t.alignment || 0,
             xx = align === 2 ? w / 2 : align === 1 ? w : 0,
             anchor = align === 2 ? 'middle' : align === 1 ? 'end' : 'start';
-          const yy = lines.length === 1 ? h / 2 : Math.min(lh / 2, h / 2);
+          const va = presentation(n, platform).text?.verticalAlignment ?? 0;
+          const yy =
+            (va === 1 ? (h - lines.length * lh) / 2 : va === 2 ? h - lines.length * lh : 0) +
+            lh / 2;
           svg += `<g><clipPath id="${uid}clip"><rect x="-2" y="-2" width="${w + 4}" height="${h + 4}"/></clipPath><text x="${xx}" y="${yy}" dominant-baseline="central" text-anchor="${anchor}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-size="${size}" font-weight="${bold}" fill="${tc}" clip-path="url(#${uid}clip)">${lines.map((line, i) => `<tspan x="${xx}" dy="${i ? lh : 0}">${esc(line)}</tspan>`).join('')}</text></g>`;
         }
       }
@@ -173,7 +180,7 @@ const G = (() => {
         if (image)
           svg += `<image href="${esc(image.dataURL)}" width="${w}" height="${h}" preserveAspectRatio="none"/>`;
         else
-          svg += `<rect width="${w}" height="${h}" fill="#8095ae0a" stroke="#90a4ba" stroke-width=".5" stroke-dasharray="4 3"/>`;
+          svg += `<g data-preview-placeholder="image"><title>Image slot · source artwork not included</title><rect width="${w}" height="${h}" rx="${Math.min(w, h) * 0.2}" fill="#9caaba22"/><svg x="${w * 0.24}" y="${h * 0.24}" width="${w * 0.52}" height="${h * 0.52}" viewBox="0 0 24 24" fill="none" stroke="#6e8494" stroke-width="1.4"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="8" cy="8" r="2"/><path d="m3 18 5-5 4 3 5-7 4 8"/></svg></g>`;
       }
       svg += (n.children || []).map((c) => node(c, platform, options, depth + 1, chain)).join('');
     }

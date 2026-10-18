@@ -20,7 +20,9 @@ export const blendNames: Record<number, string> = {
   16: 'Plus darker',
   17: 'Plus lighter',
 };
-// Preview fallbacks: SVG compositing does not implement Sketch's plus-darker operator.
+// Preview adapters for unavailable native/vibrancy blending. Multiplying a white
+// foreground into the backdrop erases it entirely. Preserve the source ink/alpha
+// with source-over instead; keep enum 16 untouched in parameter tables/exports.
 export const blendCSS: Record<number, string> = {
   0: 'normal',
   1: 'darken',
@@ -38,7 +40,7 @@ export const blendCSS: Record<number, string> = {
   13: 'saturation',
   14: 'color',
   15: 'luminosity',
-  16: 'multiply',
+  16: 'normal',
   17: 'screen',
 };
 export const rgba = (c: any, opacity = 1) =>

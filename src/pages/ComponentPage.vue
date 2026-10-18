@@ -42,6 +42,11 @@ const family = computed(() => database.value?.families.find((f) => f.id === curr
 const all = computed(() =>
   current.value ? familyDefinitions(current.value.family, current.value.platform) : [],
 );
+const duplicateNames = computed(() => {
+  const counts = new Map<string, number>();
+  for (const c of all.value) counts.set(clean(c.name), (counts.get(clean(c.name)) ?? 0) + 1);
+  return counts;
+});
 const candidates = computed(() =>
   all.value.filter(
     (c) =>
@@ -146,7 +151,12 @@ watch(current, (c) => {
             :key="c.id"
             :value="c.id"
           >
-            {{ clean(c.name).split('/').slice(1).join(' / ') }}
+            {{ clean(c.name).split('/').slice(1).join(' / ')
+            }}{{
+              (duplicateNames.get(clean(c.name)) ?? 0) > 1
+                ? ' · ' + c.id.split(':')[1]?.slice(0, 8)
+                : ''
+            }}
           </option>
         </select></label
       ><label class="checkbox small"><input type="checkbox" v-model="internal" />子部件</label>
