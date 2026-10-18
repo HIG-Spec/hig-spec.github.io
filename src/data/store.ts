@@ -3,6 +3,7 @@ import type { Database, Definition, MaterialData, Platform } from './types';
 import { initData, resolve, flatten } from '../specs/materials.js';
 import G from '../rendering/geometry.js';
 import Symbols from '../rendering/symbols.js';
+import { catalogueExamples } from './catalogue';
 export const database = shallowRef<Database>();
 export const materials = shallowRef<MaterialData>();
 export const loadError = shallowRef('');
@@ -75,6 +76,8 @@ export function defaultDefinition(
   platform: Platform = 'ios',
 ): Definition | undefined {
   const all = familyDefinitions(family);
+  const preferred = all.find((c) => c.id === catalogueExamples[family + ':' + platform]);
+  if (preferred) return preferred;
   const candidates = all.filter((c) => c.platform === platform && !c.internal);
   const score = (c: Definition) =>
     (c.facets.appearance === 'light' ? 100 : 0) +

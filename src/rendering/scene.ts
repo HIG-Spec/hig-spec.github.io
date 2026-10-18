@@ -4,6 +4,9 @@ import { resolve } from '../specs/materials.js';
 import { filterDefinition } from './refraction';
 import { paintSurface, blendCSS } from './surface';
 import { shape, simpleRecipe } from './shape';
+import { resizeFrame } from './layout';
+import { fitOverriddenText } from './text-layout.js';
+import { presentation } from './source-meta';
 import { bySymbol } from '../data/store';
 import type { Definition, Layer } from '../data/types';
 export type Background = 'aurora' | 'grid' | 'plain';
@@ -99,8 +102,14 @@ export function renderScene(
     chain: string[],
     ancestors: string[],
     opacity = 1,
+    clips: string[] = [],
   ) {
     if (n.hidden || n.f[2] <= 0 || n.f[3] <= 0 || ++visits > 4000 || ancestors.length > 20) return;
+    const paint = (markup: string, box: Box) =>
+      append(
+        clips.reduce((s, id) => `<g mask="url(#${id})">${s}</g>`, markup),
+        box,
+      );
     const [x, y, nw, nh] = n.f;
     let m = mul(parent, [1, 0, 0, 1, x, y]);
     if (n.rotation) {
@@ -123,23 +132,21 @@ export function renderScene(
         ? { recipe: options.recipe, hidden: false }
         : map.get([...chain, n.id].join('/'))
     ) as any;
-    const recipe = record?.recipe;
+    let recipe = record?.recipe;
+    const meta = presentation(n, c.platform);
+    const skipBackground = n.type === 'symbolMaster' && meta.background === false;
+    if (skipBackground && recipe) recipe = { ...recipe, fills: [] };
     if (record?.hidden) return;
     if (n.type === 'symbolInstance') {
       const ref = bySymbol.get(`${c.platform}:${n.symbolID}`);
       if (ref && !ancestors.includes(ref.id)) {
-        const root = Symbols.applyOverrides(ref.root, n.overrides);
-        walk(
-          root,
-          ref,
-          mul(m, [nw / root.f[2], 0, 0, nh / root.f[3], 0, 0]),
-          [...chain, n.id],
-          [...ancestors, ref.id],
-          alpha,
+        const root = fitOverriddenText(
+          resizeFrame(Symbols.applyOverrides(ref.root, n.overrides), nw, nh),
         );
+        walk(root, ref, m, [...chain, n.id], [...ancestors, ref.id], alpha, clips);
       }
       if (recipe)
-        append(
+        paint(
           `<g transform="${matrix(m)}" opacity="${alpha}">${paintSurface(n, recipe, base + '-instance-' + visits)}</g>`,
           boxFor(m, nw, nh, 32),
         );
@@ -155,7 +162,11 @@ export function renderScene(
       rotation: 0,
       isFlippedHorizontal: false,
       isFlippedVertical: false,
-      style: { ...n.style, ...(n.text ? { fills: [], borders: [] } : {}), opacity: 1 },
+      style: {
+        ...n.style,
+        ...(n.text || skipBackground ? { fills: [], borders: [] } : {}),
+        opacity: 1,
+      },
     };
     for (const [index, b] of backdropEffects.entries()) {
       if (b.type === 4) glassCount++;
@@ -182,27 +193,33 @@ export function renderScene(
         ? `<mask id="${id}-clip" maskUnits="userSpaceOnUse" x="${-nw}" y="${-nh}" width="${nw * 3}" height="${nh * 3}" style="mask-type:alpha">${shape(n, 'fill="white"')}</mask>`
         : `<clipPath id="${id}-clip">${shape(n, 'fill="white"')}</clipPath>`;
       defs += `<g id="${id}-source">${backdrop}</g>${filter}${clipping}`;
-      append(
+      paint(
         `<g transform="${matrix(m)}" opacity="${alpha}" data-${b.type === 4 ? 'glass' : 'background-blur'}-layer="${G.esc(n.id)}"><g ${compound ? 'mask' : 'clip-path'}="url(#${id}-clip)"><g filter="url(#${id})"><use href="#${id}-source" transform="${matrix(inverse(m))}"/></g></g></g>`,
         boxFor(m, nw, nh, 2),
       );
     }
-    const style = recipe ?? simpleRecipe(n);
+    const style = recipe ?? simpleRecipe(skipBackground ? leaf : n);
     const compositeShape = n.type === 'shapeGroup';
     const hasPaint =
       style.fills?.some((f: any) => f.isEnabled) ||
       style.borders?.some((b: any) => b.isEnabled) ||
       style.shadows?.some((v: any) => v.isEnabled) ||
       style.innerShadows?.some((v: any) => v.isEnabled);
+    const groupShadow =
+      n.type === 'group' &&
+      (n.groupBehavior ?? 0) === 0 &&
+      !style.fills?.some((f: any) => f.isEnabled && !f.layeringType) &&
+      !!n.children?.length;
+    const surfaceNode = compositeShape ? n : groupShadow ? { ...n, type: 'shapeGroup' } : leaf;
     const materialMarkup = n.text
       ? (recipe
           ? paintSurface(n, { ...recipe, fills: [], borders: [] }, base + '-text-' + visits)
           : '') + G.fragment(leaf, c.platform)
       : n.type === 'bitmap'
         ? G.fragment(leaf, c.platform)
-        : paintSurface(compositeShape ? n : leaf, style, base + '-surface-' + visits);
-    append(
-      `<g transform="${matrix(m)}" opacity="${alpha}" style="mix-blend-mode:${blendCSS[recipe?.contextSettings?.blendMode ?? n.style?.blendMode ?? 0] ?? 'normal'}">${materialMarkup}</g>`,
+        : paintSurface(surfaceNode, style, base + '-surface-' + visits);
+    paint(
+      `<g data-node-id="${G.esc(n.id)}" data-node-size="${nw} ${nh}" transform="${matrix(m)}" opacity="${alpha}" style="mix-blend-mode:${blendCSS[recipe?.contextSettings?.blendMode ?? n.style?.blendMode ?? 0] ?? 'normal'}">${materialMarkup}</g>`,
       boxFor(
         m,
         nw,
@@ -221,8 +238,27 @@ export function renderScene(
         ),
       ),
     );
-    if (!compositeShape || (!hasPaint && !backdropEffects.length))
-      for (const ch of n.children ?? []) walk(ch, owner, m, chain, ancestors, alpha);
+    if (!compositeShape || (!hasPaint && !backdropEffects.length)) {
+      let inherited = clips;
+      if (n.clippingBehavior === 1) {
+        const cid = base + '-frame-clip-' + visits;
+        defs += `<mask id="${cid}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}" style="mask-type:alpha"><g transform="${matrix(m)}">${shape(n, 'fill="white"')}</g></mask>`;
+        inherited = [...clips, cid];
+      }
+      let siblingClips = inherited;
+      for (const ch of n.children ?? []) {
+        const cm = presentation(ch, c.platform);
+        if (cm.breakMask) siblingClips = inherited;
+        walk(ch, owner, m, chain, ancestors, alpha, siblingClips);
+        if (cm.mask !== undefined && !ch.hidden) {
+          const cid = base + '-mask-chain-' + visits;
+          let t = `translate(${ch.f[0]} ${ch.f[1]})`;
+          if (ch.rotation) t += ` rotate(${-ch.rotation} ${ch.f[2] / 2} ${ch.f[3] / 2})`;
+          defs += `<mask id="${cid}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}" style="mask-type:alpha"><g transform="${matrix(m)}"><g transform="${t}">${shape(ch, 'fill="white"')}</g></g></mask>`;
+          siblingClips = [...inherited, cid];
+        }
+      }
+    }
   }
   walk(c.root, c, options.placement ?? [s, 0, 0, s, (W - w * s) / 2, (H - h * s) / 2], [], [c.id]);
   content = ops.map((op) => `<use href="#${op.id}"/>`).join('');
