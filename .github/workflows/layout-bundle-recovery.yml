@@ -1,0 +1,30 @@
+name: Preserve layout review workspace
+on:
+  push:
+    branches: [fix/visual-layout-audit]
+    paths: [.github/workflows/layout-bundle-recovery.yml]
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover staged review text without applying it
+        run: |
+          python - <<'PY'
+          import base64, lzma
+          from pathlib import Path
+          text = ''.join(''.join(Path(f'.maintenance/layout-xz-{i}.b64').read_text().split()) for i in range(5))
+          data = lzma.LZMADecompressor().decompress(base64.b64decode(text))
+          Path('/tmp/layout-recovered-prefix.patch').write_bytes(data)
+          print('Recovered prefix bytes:', len(data))
+          print('Complete file boundaries:', data.count(b'diff --git'))
+          print(data[-1500:].decode('utf-8', errors='replace'))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: layout-recovery
+          path: /tmp/layout-recovered-prefix.patch
+          retention-days: 3
