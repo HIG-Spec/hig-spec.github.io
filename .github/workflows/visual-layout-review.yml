@@ -22,6 +22,7 @@ jobs:
         run: |
           if [ ! -f src/rendering/layout.ts ]; then
             python .maintenance/recover-visual-layout.py
+            python .maintenance/fix-visual-probes.py
           fi
       - name: Build reproducible review cases and test
         run: |
@@ -42,7 +43,9 @@ jobs:
           mkdir -p test-results
           pids=()
           for browser in chromium firefox webkit; do
-            (python -u tests/browser.py --browser "$browser" && python -u tests/materials-browser.py --browser "$browser" && python -u tests/visual-review.py --browser "$browser") > "test-results/review-$browser.log" 2>&1 &
+            focused=()
+            if [ "$browser" != chromium ]; then focused+=(--focused); fi
+            (python -u tests/visual-review.py --browser "$browser" "${focused[@]}" && python -u tests/browser.py --browser "$browser" && python -u tests/materials-browser.py --browser "$browser") > "test-results/review-$browser.log" 2>&1 &
             pids+=("$!")
           done
           failed=0
