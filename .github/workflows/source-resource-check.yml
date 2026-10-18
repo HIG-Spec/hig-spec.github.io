@@ -1,0 +1,26 @@
+name: Source resource check
+on:
+  push:
+    branches: [fix/source-assets-and-compositing]
+    paths: [.github/workflows/source-resource-check.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect official public Sketch download endpoints
+        run: |
+          python - <<'PY'
+          import urllib.request
+          for key in ['04c24d8b-38fb-4afb-8836-36617e022f02','57153a31-3379-4737-8ac6-dbfd6525f052']:
+              for suffix in ['', '/download']:
+                  url='https://www.sketch.com/s/'+key+suffix
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}),timeout=25) as r:
+                          print(url, r.status, r.url, r.headers.get('Content-Type'))
+                          body=r.read(4096)
+                          print(body[:300] if not body.startswith(b'PK') else 'Sketch ZIP available')
+                  except Exception as e: print(type(e).__name__,str(e))
+          PY
