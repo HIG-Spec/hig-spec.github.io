@@ -1,0 +1,22 @@
+name: Resume visual review
+on:
+  push:
+    branches: [fix/visual-layout-audit]
+    paths: [.github/workflows/resume-visual-review.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive tracked review source only
+        run: git archive --format=tar.gz HEAD > /tmp/visual-review-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-review-source
+          path: /tmp/visual-review-source.tar.gz
+          retention-days: 3
