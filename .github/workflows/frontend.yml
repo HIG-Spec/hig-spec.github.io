@@ -12,8 +12,15 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
+    name: Verify ${{ matrix.browser }}
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    env:
+      BROWSER: ${{ matrix.browser }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,32 +31,33 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
-      - name: Audit all source materials and build family coverage cases
-        run: node tests/material-coverage.mjs
+      - name: Audit material and visual coverage
+        run: |
+          node tests/material-coverage.mjs
+          node tests/generate-visual-cases.mjs
+          npx prettier --write tests/visual-cases.json
+          git diff --exit-code -- tests/visual-cases.json
       - name: Install test browsers
         run: |
           python -m pip install -r tests/requirements.txt
-          python -m playwright install --with-deps chromium firefox webkit
+          python -m playwright install --with-deps "$BROWSER"
       - name: Check production pages, every family, saved states and refraction pixels
         run: |
           python -m http.server 4173 --bind 127.0.0.1 --directory dist > /tmp/hig-http.log 2>&1 &
           mkdir -p test-results
-          pids=()
-          for browser in chromium firefox webkit; do
-            (python -u tests/browser.py --browser "$browser" && python -u tests/materials-browser.py --browser "$browser") > "test-results/$browser.log" 2>&1 &
-            pids+=("$!")
-          done
-          failed=0
-          for pid in "${pids[@]}"; do wait "$pid" || failed=1; done
-          cat test-results/*.log
-          exit "$failed"
+          focused=()
+          if [ "$BROWSER" != chromium ]; then focused+=(--focused); fi
+          python -u tests/visual-review.py --browser "$BROWSER" "${focused[@]}"
+          python -u tests/browser.py --browser "$BROWSER"
+          python -u tests/materials-browser.py --browser "$BROWSER"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: browser-checks
+          name: browser-checks-${{ matrix.browser }}
           path: test-results/
           retention-days: 7
       - uses: actions/upload-artifact@v4
+        if: matrix.browser == 'chromium'
         with:
           name: static-site
           path: dist/
@@ -59,7 +67,7 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: write
       pages: write
@@ -73,7 +81,7 @@ jobs:
           path: dist
       - uses: actions/download-artifact@v4
         with:
-          name: browser-checks
+          name: browser-checks-chromium
           path: /tmp/source-browser-checks
       - name: Restore family coverage cases for live verification
         run: |
@@ -107,12 +115,13 @@ jobs:
           done
           echo 'The public site has not yet served the expected HTML.' >&2
           exit 1
-      - name: Verify the public deployment and all material families in Chromium
+      - name: Verify public pages, materials and reviewed visual variants in Chromium
         run: |
           python -m pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium
           python -u tests/browser.py --url "https://hig-spec.github.io/?build=$GITHUB_SHA" --browser chromium
           python -u tests/materials-browser.py --url "https://hig-spec.github.io/?build=$GITHUB_SHA" --browser chromium
+          python -u tests/visual-review.py --url "https://hig-spec.github.io/?build=$GITHUB_SHA" --browser chromium
       - uses: actions/upload-artifact@v4
         if: always()
         with:
