@@ -19,7 +19,9 @@ var missing: [String] = []
 for code in requests.sorted() {
     guard let number = UInt32(code, radix: 16), let scalar = Unicode.Scalar(number) else { continue }
     for (weight, trait) in [("400", NSFont.Weight.regular), ("600", NSFont.Weight.semibold)] {
-        let font = NSFont(name: weight == "600" ? "SFPro-Semibold" : "SFPro-Regular", size: 96) ?? NSFont(name: "SFPro", size: 96) ?? NSFont.systemFont(ofSize: 96, weight: trait)
+        // These two keyboard symbols are serialized in SF Compact in the source kit.
+        let family = ["10072C", "100C16"].contains(code) ? "SFCompact" : "SFPro"
+        let font = NSFont(name: family + (weight == "600" ? "-Semibold" : "-Regular"), size: 96) ?? NSFont(name: family, size: 96) ?? NSFont.systemFont(ofSize: 96, weight: trait)
         let line = CTLineCreateWithAttributedString(NSAttributedString(string: String(scalar), attributes: [.font: font, .foregroundColor: NSColor.white]))
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
         var valid = !runs.isEmpty
