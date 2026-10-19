@@ -32,13 +32,16 @@ jobs:
           Path('/tmp/symbol-requests.json').write_text(json.dumps(sorted(codes)))
           print('Referenced codepoints:',len(codes))
           PY
-      - name: Prepare source typeface only in temporary runner storage
+      - name: Prepare source typefaces only in temporary runner storage
         run: |
-          curl -fL --retry 2 'https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg' -o /tmp/preview-typeface.dmg
-          hdiutil attach -nobrowse -readonly -mountpoint /tmp/preview-typeface /tmp/preview-typeface.dmg
-          package=$(find /tmp/preview-typeface -name '*.pkg' -maxdepth 3 | head -1)
-          pkgutil --expand-full "$package" /tmp/preview-fonts
-          hdiutil detach /tmp/preview-typeface
+          mkdir -p /tmp/preview-fonts
+          for family in Pro Compact; do
+            curl -fL --retry 2 "https://devimages-cdn.apple.com/design/resources/download/SF-$family.dmg" -o /tmp/preview-typeface.dmg
+            hdiutil attach -nobrowse -readonly -mountpoint /tmp/preview-typeface /tmp/preview-typeface.dmg
+            package=$(find /tmp/preview-typeface -maxdepth 3 -name '*.pkg' | head -1)
+            pkgutil --expand-full "$package" "/tmp/preview-fonts/$family"
+            hdiutil detach /tmp/preview-typeface
+          done
       - name: Render referenced glyphs and reject fallback fonts
         env:
           PREVIEW_FONT_DIRECTORY: /tmp/preview-fonts
@@ -55,7 +58,7 @@ jobs:
               new=old.with_name(old.stem+'-'+digest[:12]+'.png');old.rename(new)
               glyph['url']=new.relative_to(root).as_posix();glyph['sha256']=digest
           (root/'symbol-artwork.json').write_text(json.dumps(m,separators=(',',':'),sort_keys=True))
-          assert len(m['glyphs']) > 200, 'Source typeface did not resolve sufficient glyphs'
+          assert len(m['glyphs']) > 200, 'Source typefaces did not resolve sufficient glyphs'
           assert not list(root.rglob('*.otf')) and not list(root.rglob('*.ttf')) and not list(root.rglob('*.ttc'))
           PY
       - uses: actions/upload-artifact@v4
