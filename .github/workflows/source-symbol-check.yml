@@ -1,0 +1,43 @@
+name: Native symbol preview check
+on:
+  push:
+    branches: [fix/source-assets-and-compositing]
+    paths: [.github/workflows/source-symbol-check.yml, tools/render-native-symbols.swift]
+permissions:
+  contents: read
+jobs:
+  symbols:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gather only referenced private-use symbols
+        run: |
+          python3 - <<'PY'
+          import gzip, json
+          from pathlib import Path
+          db=json.loads(gzip.decompress(Path('public/data/geometry.json.gz').read_bytes()))
+          codes=set()
+          def text(s):
+              if not isinstance(s,str): return
+              for c in s:
+                  n=ord(c)
+                  if 0xe000<=n<=0xf8ff or 0xf0000<=n<=0xffffd or 0x100000<=n<=0x10fffd: codes.add(f'{n:X}')
+          def walk(n):
+              text(n.get('text',{}).get('value'))
+              for o in n.get('overrides',[]):
+                  if o.get('overrideName','').endswith('_stringValue'): text(o.get('value'))
+              for c in n.get('children',[]): walk(c)
+          for c in db['components']: walk(c['root'])
+          Path('/tmp/symbol-requests.json').write_text(json.dumps(sorted(codes)))
+          print('Referenced codepoints:',len(codes))
+          PY
+      - name: Render referenced glyphs using the installed system font
+        run: |
+          mkdir -p /tmp/symbol-preview/artwork
+          swift tools/render-native-symbols.swift /tmp/symbol-requests.json /tmp/symbol-preview/artwork /tmp/symbol-preview/symbol-artwork.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-symbol-preview
+          path: /tmp/symbol-preview/
+          retention-days: 3
