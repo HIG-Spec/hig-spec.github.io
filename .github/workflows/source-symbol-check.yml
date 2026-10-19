@@ -2,7 +2,7 @@ name: Native symbol preview check
 on:
   push:
     branches: [fix/source-assets-and-compositing]
-    paths: [.github/workflows/source-symbol-check.yml, tools/render-native-symbols.swift]
+    paths: [.github/workflows/source-symbol-check.yml]
 permissions:
   contents: read
 jobs:
@@ -32,10 +32,32 @@ jobs:
           Path('/tmp/symbol-requests.json').write_text(json.dumps(sorted(codes)))
           print('Referenced codepoints:',len(codes))
           PY
-      - name: Render referenced glyphs using the installed system font
+      - name: Prepare source typeface only in temporary runner storage
+        run: |
+          curl -fL --retry 2 'https://devimages-cdn.apple.com/design/resources/download/SF-Pro.dmg' -o /tmp/preview-typeface.dmg
+          hdiutil attach -nobrowse -readonly -mountpoint /tmp/preview-typeface /tmp/preview-typeface.dmg
+          package=$(find /tmp/preview-typeface -name '*.pkg' -maxdepth 3 | head -1)
+          pkgutil --expand-full "$package" /tmp/preview-fonts
+          hdiutil detach /tmp/preview-typeface
+      - name: Render referenced glyphs and reject fallback fonts
+        env:
+          PREVIEW_FONT_DIRECTORY: /tmp/preview-fonts
         run: |
           mkdir -p /tmp/symbol-preview/artwork
           swift tools/render-native-symbols.swift /tmp/symbol-requests.json /tmp/symbol-preview/artwork /tmp/symbol-preview/symbol-artwork.json
+          python3 - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          root=Path('/tmp/symbol-preview'); m=json.loads((root/'symbol-artwork.json').read_text())
+          for glyph in m['glyphs'].values():
+              assert not any('lastresort' in s.lower() for s in glyph['fonts'])
+              old=root/glyph['url']; digest=hashlib.sha256(old.read_bytes()).hexdigest()
+              new=old.with_name(old.stem+'-'+digest[:12]+'.png');old.rename(new)
+              glyph['url']=new.relative_to(root).as_posix();glyph['sha256']=digest
+          (root/'symbol-artwork.json').write_text(json.dumps(m,separators=(',',':'),sort_keys=True))
+          assert len(m['glyphs']) > 200, 'Source typeface did not resolve sufficient glyphs'
+          assert not list(root.rglob('*.otf')) and not list(root.rglob('*.ttf')) and not list(root.rglob('*.ttc'))
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: source-symbol-preview
